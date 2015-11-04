@@ -7,7 +7,6 @@
 #ifndef _VIRTUALMACHINE_H_
 #define _VIRTUALMACHINE_H_
 
-#include <iostream>
 #include <list>
 
 #include "VMHandle.h"

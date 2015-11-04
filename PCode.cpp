@@ -1002,7 +1002,6 @@ void PCode::v_pop_register(long _register)
                 }
                 else  //32位寄存器
                 {
-
                     db(pcode_info.handle_table.d_pop_reg.handle_i);
                     db(reg_offset);
                     v_reg_context.vr[i].status = _register & enable;
@@ -1016,8 +1015,7 @@ void PCode::v_pop_register(long _register)
                 printf("保护32位程序却要pop 64位寄存器\n");
                 __asm int 3;
 #endif 
-#endif
-#ifdef PROTECT_X64
+#else
                 //64位寄存器
                 if (_register & T_RN) 
                 {
@@ -1026,7 +1024,8 @@ void PCode::v_pop_register(long _register)
                     db(reg_offset);
                     v_reg_context.vr[i].status = _register & enable;
                     return;
-                } else
+                }
+                else
                 {
                     //RAX-RDI
                     db(pcode_info.handle_table.q_pop_reg.handle_i);

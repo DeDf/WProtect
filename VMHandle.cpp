@@ -914,6 +914,9 @@ const GPReg & get_register_l(const GPReg & r)
       }
     }
   }
+
+  printf("get_register_l error!\n");
+  return reg_array[0][0];
 }
 
 void vcode_c_ror(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)

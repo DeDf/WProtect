@@ -156,11 +156,11 @@ void buildvm_test(BuildExeInfo & build_info)
 
     get_wprotect_sdk_address(section,build_info,"WProtect Begin","WProtect End");
 
-    VMAddressTable table( section.GetNewSectionBase(), 0x512, false );
+    VMAddressTable table( section.GetNewSectionBase(), 1024, false );
 
     bool t_sign = table.get_sign();
     table.set_sign(true);
-    long virtualmachine_address = table.assign_address(0x1024);
+    long virtualmachine_address = table.assign_address(4096);
     table.set_sign(t_sign);
 
     VirtualMachineManage vm;

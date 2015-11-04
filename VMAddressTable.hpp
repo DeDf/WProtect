@@ -33,9 +33,9 @@ class VMAddressTable : public AddressTable<VTable>
 {
 public:
     char *buffer;
-    size_t buffer_size;
+    unsigned long buffer_size;
 
-  VMAddressTable(long _base,size_t _size,bool _sign)
+  VMAddressTable(long _base,unsigned long _size,bool _sign)
     :AddressTable( _base,_size,_sign ),buffer(NULL),buffer_size(0)
 #ifdef _DEBUG
      ,vmcode_piece_count(0)
@@ -54,7 +54,7 @@ public:
 
   
   void update(VCombosVMCode * p ) {
-    for (list<space>::iterator iter = addr_vec.begin(  ); iter != addr_vec.end(  ); ++iter)
+    for (list<space>::iterator iter = addr_used.begin(  ); iter != addr_used.end(  ); ++iter)
     {
       if (iter->data.v == p)
       {
@@ -72,14 +72,14 @@ public:
       buffer_size = size;   
   }
 
-  long copy(unsigned char * buf,size_t size)
+  long copy(unsigned char * buf,unsigned long size)
   {
     long address = assign_address(size);
     memcpy(&(buffer[address - base]),buf,size);
     return address;
   }
 
-  void * copy(long address,unsigned char * buf,size_t size)
+  void * copy(long address,unsigned char * buf,unsigned long size)
   {
     if (buffer == NULL)
       init_buffer();    
@@ -90,10 +90,10 @@ public:
   
   void * copy(unsigned char * buf)
   {
-    //sort( addr_vec.begin(  ) , addr_vec.end(  ));
-    addr_vec_sort();
-    for (list<space>::iterator iter = addr_vec.begin( ) ; iter !=
-           addr_vec.end(  ); ++iter)
+    //sort( addr_used.begin(  ) , addr_used.end(  ));
+    addr_used_sort();
+    for (list<space>::iterator iter = addr_used.begin( ) ; iter !=
+           addr_used.end(  ); ++iter)
     {
       space d = *iter;
       if ( get_sign() )
@@ -121,7 +121,7 @@ public:
     if (buffer == NULL)
       init_buffer();
 
-    addr_vec_sort();
+    addr_used_sort();
 
 #ifdef _DEBUG
     char buildvmcode_name[256];
@@ -129,8 +129,8 @@ public:
     FILE *file = fopen(buildvmcode_name,"wb");
 #endif
  
-    for (list<space>::iterator iter = addr_vec.begin( ) ;
-        iter != addr_vec.end(  );
+    for (list<space>::iterator iter = addr_used.begin( ) ;
+        iter != addr_used.end(  );
         ++iter)
     {/*{{{*/
       space & d = *iter;
@@ -210,8 +210,8 @@ public:
 
   VTable * get_data( long _base )
   {
-    for (list<space>::iterator iter = addr_vec.begin( ) ; iter !=
-           addr_vec.end(  ); ++iter)
+    for (list<space>::iterator iter = addr_used.begin( ) ; iter !=
+           addr_used.end(  ); ++iter)
     {
       // space d = *iter;
       if (iter->begin == _base)
@@ -220,20 +220,20 @@ public:
     return NULL;
   }
 
-  size_t get_size( ) const {
+  unsigned long get_size( ) const {
     return size;
   }
 
-  long assign_address(size_t _size,const VTable & _data)
+  unsigned long assign_address(unsigned long _size,const VTable & _data)
   {
     
-    long addr = AddressTable::assign_address(_size, _data);
-    //addr_vec.end()->data.base = addr;
-    addr_vec.back().data.base = addr;
+    unsigned long addr = (unsigned long)AddressTable::assign_address(_size, _data);
+    //addr_used.end()->data.base = addr;
+    addr_used.back().data.base = addr;
     //printf("·ÖÅä¿ªÊ¼\n");
     if (buffer)
     {
-      if ((long)buffer_size < size)
+      if (buffer_size < size)
       {
         char * newbuf = new char[size];
         memcpy(newbuf,buffer,buffer_size);
@@ -245,13 +245,13 @@ public:
     return addr;
   }
 
-  long assign_address(size_t _size)
+  unsigned long assign_address(unsigned long _size)
   {
-    long addr = AddressTable::assign_address(_size);
+    unsigned long addr = (unsigned long)AddressTable::assign_address(_size);
 
     if (buffer)
     {
-      if ((long)buffer_size < size)
+      if (buffer_size < size)
       {
         char * newbuf = new char[size];
         memcpy(newbuf,buffer,buffer_size);

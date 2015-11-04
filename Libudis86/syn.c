@@ -28,6 +28,10 @@
 #include "syn.h"
 #include "udint.h"
 
+#if defined(_MSC_VER)
+#pragma warning(disable:4996)
+#endif
+
 /* -----------------------------------------------------------------------------
  * Intel Register Table - Order Matters (types.h)!
  * -----------------------------------------------------------------------------

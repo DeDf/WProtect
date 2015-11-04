@@ -392,9 +392,9 @@ long BuildVMByteCode::build_vmcode(bool b_allocator)
 
         if (b_allocator)
         {
-            size_t vm_piece_size = var_pcode.count_vmcode_end();
+            unsigned long vm_piece_size = (unsigned long)var_pcode.count_vmcode_end();
 
-            long t_byte_code_addr = ptr_addr_table->assign_address(vm_piece_size,var_vmcode_info);
+            unsigned long t_byte_code_addr = ptr_addr_table->assign_address(vm_piece_size,var_vmcode_info);
 
             printf("±êÇ©%d,´óÐ¡:%d, addr:%08x\n", iter->get_label(), vm_piece_size, t_byte_code_addr);
 
