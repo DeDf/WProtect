@@ -25,8 +25,7 @@ public:
       throw;
     VirtualMachine *vm = vmmanage->rand_virtual_machine();
      var_pcode.init_handle_table(vm->get_vm_handle_table());
-     var_pcode.init_sign( vm->get_vm_handle().fuc_select.addorsub );
-     //var_combos.link_pcode( &var_pcode );    
+     var_pcode.init_sign( vm->get_vm_handle().sign );
   }
   explicit VMCodeBufferManage( VirtualMachine *vm )
     :var_combos(&var_pcode)
@@ -34,7 +33,7 @@ public:
     if ( !vm )
       throw;
      var_pcode.init_handle_table(vm->get_vm_handle_table());
-     var_pcode.init_sign( vm->get_vm_handle().fuc_select.addorsub );
+     var_pcode.init_sign( vm->get_vm_handle().sign );
      //var_combos.link_pcode( &var_pcode ); 
   }
   VMCodeBufferManage(VirtualMachineManage *vmmanage,
@@ -50,7 +49,7 @@ public:
       throw;
     VirtualMachine *vm = vmmanage->rand_virtual_machine();
      var_pcode.init_handle_table(vm->get_vm_handle_table());
-     var_pcode.init_sign( vm->get_vm_handle().fuc_select.addorsub );
+     var_pcode.init_sign( vm->get_vm_handle().sign );
      //var_combos.link_pcode( &var_pcode ); 
   }
   
@@ -66,7 +65,7 @@ public:
     if ( !vm )
       throw;
      var_pcode.init_handle_table(vm->get_vm_handle_table());
-     var_pcode.init_sign( vm->get_vm_handle().fuc_select.addorsub );
+     var_pcode.init_sign( vm->get_vm_handle().sign );
      //var_combos.link_pcode( &var_pcode );
      var_pcode.set_key(key);
   }  

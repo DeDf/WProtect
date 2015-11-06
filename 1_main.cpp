@@ -114,7 +114,7 @@ void get_wprotect_sdk_address(CPESection & section,
                             piece.CodeSize = protect_end_address - protect_begin_address;
                             build_info.push_back(piece);
 
-                            printf("get_wprotect_sdk_address\n保护地址%x - %x\n",
+                            printf("保护地址%x - %x\n",
                                 piece.CodeStartAddr,
                                 piece.CodeStartAddr+piece.CodeSize);
                         }

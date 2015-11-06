@@ -11,10 +11,6 @@
 #define VMSTACK_MIN_COUNT  25
 /* 32Î» eax,ebx,ecx,edx,ebp,esi,edi,eflag ºÍ 8¸öÁÙÊ±¼Ä´æÆ÷ + Ìø×ª¼Ä´æÆ÷ + ÃÜÔ¿¼Ä´æÆ÷ */
 
-typedef struct _function_select{
-     bool addorsub;  
-}function_select;
-
 typedef struct _pcode_encryption_
 {
   long key;
@@ -77,14 +73,16 @@ public:
 public:
     AsmJit::Assembler a;
     long key;
-    function_select fuc_select;
+    bool sign;
 
     void full_handle_info( handle_info & info,char flag );
+
+    handle_info dispatch(long table_addr );
     
 	handle_info b_read_stack(); //byte
 	handle_info w_read_stack(); //word
 	handle_info d_read_stack(); //dword
-    handle_info q_read_stack(  );
+    handle_info q_read_stack();
     
     handle_info initialization(long pcode_base ); //pcodeµØÖ·
 
@@ -136,7 +134,6 @@ public:
     handle_info cpuid(  );
 
     handle_info check_stack( );
-    handle_info dispatch(long table_addr );
 
     handle_info b_read_mem( );
     handle_info w_read_mem(  );

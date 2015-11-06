@@ -1,0 +1,6 @@
+Debug/
+Release/    # 忽略 Release/ 目录下的所有文件
+*.ncb       # 忽略所有 .ncb 结尾的文件
+*.sln
+*.suo
+*.user

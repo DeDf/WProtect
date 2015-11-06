@@ -49,5 +49,5 @@ VirtualMachine *VirtualMachineManage::rand_virtual_machine()
 void VirtualMachineManage::moc(VirtualMachine *pvm,PCode *code) //连接PCode到虚拟机
 {
   code->init_handle_table(pvm->handle_pcode);
-  code->init_sign(pvm->handle.fuc_select.addorsub);
+  code->init_sign(pvm->handle.sign);
 }

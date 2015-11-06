@@ -1512,9 +1512,44 @@ void VMHandle::full_handle_info(handle_info & info,char flag)
     }
 }
 
+handle_info VMHandle::dispatch(long table_addr)
+{
+    handle_info info;
+#ifdef _DEBUG
+    strcpy(info.handle_name,"dispatch");
+#endif
+    a.bind(l_dispatch);
+    info.label = &l_dispatch;
+    full_handle_info(info,FULL_BEGIN);
+
+    a.bind( l_key_dispatch );
+    if (sign)
+    {
+        a.movzx(nax,byte_ptr(nsi));
+        a.inc(nsi);
+    }
+    else
+    {
+        a.movzx(nax,byte_ptr(nsi,-1));
+        a.dec(nsi);
+    }
+
+    full_handle_info(info,FULL_BYTE_DECODE);
+
+#ifdef PROTECT_X64
+    a.push(qword_ptr_abs((void*)table_addr,nax,3));
+#else
+    a.push(dword_ptr_abs((void*)table_addr,nax,2));
+#endif
+    a.ret();
+
+    full_handle_info(info,FULL_END);
+    return info;
+}
+
 void VMHandle::read_pc_byte(handle_info & info)
 {
-  if (fuc_select.addorsub)
+  if (sign)
   {
     a.mov(al,byte_ptr(esi));
     a.inc(esi);
@@ -1529,7 +1564,7 @@ void VMHandle::read_pc_byte(handle_info & info)
 
 void VMHandle::read_pc_word(handle_info &info)
 {
-  if (fuc_select.addorsub)
+  if (sign)
   {
     a.mov(ax,word_ptr(esi));
     a.add(esi,2);
@@ -1544,7 +1579,7 @@ void VMHandle::read_pc_word(handle_info &info)
 
 void VMHandle::read_pc_dword(handle_info &info)
 {
-  if (fuc_select.addorsub)
+  if (sign)
   {
     a.mov(eax,dword_ptr(esi));
     a.add(esi,4);
@@ -1559,7 +1594,7 @@ void VMHandle::read_pc_dword(handle_info &info)
 
 void VMHandle::read_pc_qword(handle_info &info)
 {
-  if (fuc_select.addorsub)
+  if (sign)
   {
     a.mov(nax,qword_ptr(nsi));
     a.add(nsi,4);
@@ -1575,6 +1610,9 @@ void VMHandle::read_pc_qword(handle_info &info)
 handle_info VMHandle::b_read_stack()
 {
   handle_info info;
+#ifdef _DEBUG
+  strcpy(info.handle_name,"b_read_stack");
+#endif
   a.bind(l_b_read_stack);
   info.label = &l_b_read_stack;
   full_handle_info(info,FULL_BEGIN);
@@ -1584,6 +1622,7 @@ handle_info VMHandle::b_read_stack()
 #else
   read_pc_qword(info);
 #endif
+
   a.mov(al,byte_ptr(nax,nbp));
   a.sub(nbp,1);
   a.mov(byte_ptr(nbp),al);
@@ -1596,6 +1635,9 @@ handle_info VMHandle::b_read_stack()
 handle_info VMHandle::w_read_stack()
 {
   handle_info info;
+#ifdef _DEBUG
+  strcpy(info.handle_name,"w_read_stack");
+#endif
   a.bind(l_w_read_stack);
   info.label = &l_w_read_stack;
   full_handle_info(info,FULL_BEGIN);
@@ -1618,6 +1660,9 @@ handle_info VMHandle::w_read_stack()
 handle_info VMHandle::d_read_stack()
 {
   handle_info info;
+#ifdef _DEBUG
+  strcpy(info.handle_name,"d_read_stack");
+#endif
   a.bind(l_d_read_stack);
   info.label = &l_d_read_stack;
   full_handle_info(info,FULL_BEGIN);
@@ -1640,6 +1685,9 @@ handle_info VMHandle::d_read_stack()
 handle_info VMHandle::q_read_stack()
 {
   handle_info info;
+#ifdef _DEBUG
+  strcpy(info.handle_name,"q_read_stack");
+#endif
   a.bind(l_q_read_stack);
   info.label = &l_q_read_stack;
   full_handle_info(info,FULL_BEGIN);
@@ -1699,40 +1747,6 @@ handle_info VMHandle::initialization(long pcode_base)
   a.mov(nsi,pcode_base);
   a.jmp(l_dispatch);
 
-  full_handle_info(info,FULL_END);
-  return info;
-}
-
-handle_info VMHandle::dispatch(long table_addr)
-{
-  handle_info info;
-#ifdef _DEBUG
-  strcpy(info.handle_name,"dispatch");
-#endif
-  a.bind(l_dispatch);
-  info.label = &l_dispatch;
-  full_handle_info(info,FULL_BEGIN);
-
-  a.bind( l_key_dispatch );
-  if (fuc_select.addorsub)
-  {
-    a.movzx(nax,byte_ptr(nsi));
-    a.inc(nsi);
-  }
-  else
-  {
-    a.movzx(nax,byte_ptr(nsi,-1));
-    a.dec(nsi);
-  }
-
-  full_handle_info(info,FULL_BYTE_DECODE);
-
-#ifdef PROTECT_X64
-  a.push(qword_ptr_abs((void*)table_addr,nax,3));
-#else
-  a.push(dword_ptr_abs((void*)table_addr,nax,2));
-#endif
-  a.ret();
   full_handle_info(info,FULL_END);
   return info;
 }

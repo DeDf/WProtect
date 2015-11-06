@@ -14,14 +14,13 @@ VirtualMachine::VirtualMachine(long base)
 
 VirtualMachine::VirtualMachine(long base,bool sign)
 {
-  handle.fuc_select.addorsub = sign;
+  handle.sign = sign;
   build_vm_handle(base);
 }
 
 VirtualMachine::~VirtualMachine()
 {
-  list <ppcode_block_info>::iterator iter;
-  for (iter = pcode_list.begin(); iter != pcode_list.end(); ++iter)
+  for (list <ppcode_block_info>::iterator iter = pcode_list.begin(); iter != pcode_list.end(); ++iter)
   {
     ppcode_block_info info = *iter;
     delete info;
@@ -29,42 +28,42 @@ VirtualMachine::~VirtualMachine()
   
   for (list <handle_info>::iterator iter = handle_info_list.begin(); iter != handle_info_list.end(); ++iter)
   {
-
-    handle_info dv = *iter;
+    handle_info hi = *iter;
    
-    for (vector <encryption>::iterator eiter = dv.encode_key.begin(); eiter != dv.encode_key.end();++eiter) //删除encode对象
+    for (vector <encryption>::iterator eiter = hi.encode_key.begin(); eiter != hi.encode_key.end();++eiter) //删除encode对象
     {
-      encryption en = *eiter;
-      if (en.enfuc)
+      if (eiter->enfuc)
       {
-        delete en.enfuc;
-        en.enfuc = NULL;
+        delete eiter->enfuc;
+        eiter->enfuc = NULL;
       }
     }
 
-    for (vector <decryption>::iterator diter = dv.decode_key.begin(); diter != dv.decode_key.end();++diter) //删除decode对象
+    for (vector <decryption>::iterator diter = hi.decode_key.begin(); diter != hi.decode_key.end();++diter) //删除decode对象
     {
       if (diter->defuc)
       {
-          delete diter->defuc;
-          diter->defuc = NULL;
+        delete diter->defuc;
+        diter->defuc = NULL;
       }
     }
 
-    for (list <vcode_encryption>::iterator eiter = dv.encode_pcode.begin(); eiter != dv.encode_pcode.end();++eiter) //删除encode对象
+    for (list <vcode_encryption>::iterator eiter = hi.encode_pcode.begin(); eiter != hi.encode_pcode.end();++eiter)
     {
-      vcode_encryption en = *eiter;
-      if (en.enfuc)
-      delete en.enfuc;
-      en.enfuc = NULL;
+      if (eiter->enfuc)
+      {
+        delete eiter->enfuc;
+        eiter->enfuc = NULL;
+      }
     }
 
-    for (list <vcode_decryption>::iterator diter = dv.decode_pcode.begin(); diter != dv.decode_pcode.end();++diter)
+    for (list <vcode_decryption>::iterator diter = hi.decode_pcode.begin(); diter != hi.decode_pcode.end();++diter)
     {
-      vcode_decryption de = *diter;
-      if (de.defuc)
-        delete de.defuc;
-      de.defuc = NULL;
+      if (diter->defuc)
+      {
+        delete diter->defuc;
+        diter->defuc = NULL;
+      }
     }
   }
 }
@@ -197,7 +196,7 @@ void VirtualMachine::build_vm_handle(long base)
     info = (handle.*r_fuc)();
 
 #ifdef _DEBUG
-    printf("%s\r\n",info.handle_name);
+    printf("%s\n",info.handle_name);
 #endif
 
     handle_info_list.push_back(info);
@@ -205,17 +204,14 @@ void VirtualMachine::build_vm_handle(long base)
 
   long size = handle.a.getCodeSize();
 
+  for (unsigned int i = 0; i < (unsigned int)rand() % 0x100; i++)
+  {
 #ifdef PROTECT_X64
-  for (int i = 0; i < 0xff; i++)
-  {
     handle.a.dq(rand());
-  }
 #else
-  for (int i = 0; i < 0xff; i++)
-  {
     handle.a.dd(rand());
-  }
 #endif
+  }
 
   dispatch_base = handle.a.getCodeSize() + base;
   info = handle.dispatch(base + size);
@@ -477,8 +473,8 @@ void VirtualMachine::full_handle_table(long base,long table_offset)
   unsigned long count = 1;
 
 #ifdef _DEBUG
-  FILE *file = fopen("VMHandleAddress.txt","wb");
-  fprintf(file, "var note\r\n");
+  FILE *file;
+  fopen_s(&file, "VMHandleAddress.txt", "wb");
 #endif
 
   for (list <handle_info>::iterator iter = handle_info_list.begin(); iter != handle_info_list.end(); ++iter)
@@ -488,10 +484,8 @@ void VirtualMachine::full_handle_table(long base,long table_offset)
     buf[count] = info.offset + base;
 
 #ifdef _DEBUG
-    fprintf(file, "mov eip,401000\n");    
+    fprintf(file, "handle_addr_name %s\n", info.handle_name);
     fprintf(file, "mov note,%x\n", buf[count]);
-    fprintf(file, "cmt note,\"%s\"\n", info.handle_name);
-    fprintf(file, "lbl note,\"%s\"\n", info.handle_name);    
 #endif
 
     if ( info.label == &handle.l_b_read_stack )
