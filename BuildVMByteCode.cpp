@@ -117,7 +117,7 @@ void printf_map_register_store(
     while (_p_map_in.find(i) != _p_map_in.end())
     {
         printf("标签:%x\n",i);
-        printf("In Key:%08x\n",_p_map_in[i].get_key());
+        printf("In  Key:%08x\n",_p_map_in[i].get_key());
         OutDI di;
         di.set_begin_text("");
         di.set_end_text(" ");
@@ -234,7 +234,7 @@ long BuildVMByteCode::build_vmcode(bool b_allocator)
 #ifdef _DEBUG
             char file_name[256];
             memset(&file_name,0,256);
-            sprintf(file_name,"virtual_machine_assembly/Label%d,%08x\n",
+            sprintf_s(file_name, 256, "virtual_machine_assembly/Label%d,%08x\n",
                 iter->get_label(),
                 var_map_label_vmcode_addr[iter->get_label()]);
 
@@ -734,7 +734,7 @@ void BuildVMByteCode::build_fpu(VCombosVMCode & var_combos_vm_code,ud_t &var_ud)
                         o1 = AsmJit::qword_ptr(AsmJit::nbp);
                         break;
                     default:
-#ifdef DEBUG
+#ifdef _DEBUG
                         printf("未知的FPU指令操作数大小%d\n",get_operand1(var_ud).size);
 #endif
                         break;
@@ -798,21 +798,18 @@ void BuildVMByteCode::build_pfx(VCombosVMCode & var_combos_vm_code,ud_t &var_ud,
                    var_map_label_vmreg_store_out[var_cur_piece.get_label()]);
        new_combos_vm_code.set_vmregister_store_out(
                    var_map_label_vmreg_store_in[var_cur_piece.get_label()]);
-#ifdef DEBUG
+#ifdef _DEBUG
            char file_name[256];
            memset(&file_name,0,256);
-           sprintf(file_name,"virtual_machine_assembly/NewLabel%d,%08x\n", get_newvm_cur_label(),var_map_newlabel_vmcode_addr[get_newvm_cur_label()]);
+           sprintf_s(file_name, 256,
+               "virtual_machine_assembly/NewLabel%d,%08x\n",
+               get_newvm_cur_label(),var_map_newlabel_vmcode_addr[get_newvm_cur_label()]);
            new_pcode.out_log_file(file_name);
 #endif
-
-
    }
+
    new_combos_vm_code.save_vm_context();
    build(new_combos_vm_code,var_ud); 
-   
-   //new_combos_vm_code.d_push_imm(0);
-   //new_combos_vm_code.set_key(0);
-
 
    if (var_ud.pfx_rep)
    {
