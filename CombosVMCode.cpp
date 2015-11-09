@@ -108,13 +108,11 @@ void VCombosVMCode::upset_register_array(RegisterStore & r )
   r.register_array[ register_count++ ] = T_NBX;
   r.register_array[ register_count++ ] = T_NCX;
   r.register_array[ register_count++ ] = T_NDX;
-  //r.register_array[ register_count++ ] = T_NSP;
   r.register_array[ register_count++ ] = T_NBP;
   r.register_array[ register_count++ ] = T_NSI;
   r.register_array[ register_count++ ] = T_NDI;
   r.register_array[ register_count++ ] = T_EFLAG;
   r.register_array[ register_count++ ] = T_KEY;
-  //r.register_array[ register_count++ ] = T_RET;
 #ifdef PROTECT_X64
   r.register_array[ register_count++ ] = T_R8;
   r.register_array[ register_count++ ] = T_R9;
@@ -458,12 +456,12 @@ void VCombosVMCode::q_shr()
 
 void VCombosVMCode::ret()
 {
- pushf();
+  pushf();
   push(T_NAX);
   push(T_NCX);
   push(T_NDX);
   push(T_NBX);
-  //  push(T_RSP | mode);
+  //
   push(T_NBP);
   push(T_NSI);
   push(T_NDI);
