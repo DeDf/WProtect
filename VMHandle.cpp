@@ -1351,7 +1351,6 @@ void VMHandle::full_handle_info(handle_info & info,char flag)
         a.db(code[i]);
       }      
       info.encode_pcode.push_back(en);
-      //info.decode_pcode.push_back(de);
       delete de.defuc;
     }
     return;
@@ -1420,7 +1419,6 @@ void VMHandle::full_handle_info(handle_info & info,char flag)
         a.db(code[i]);
       }      
       info.encode_pcode.push_back(en);
-      //info.decode_pcode.push_back(de);
       delete de.defuc;
     }    
     return;
@@ -1455,7 +1453,6 @@ void VMHandle::full_handle_info(handle_info & info,char flag)
         a.db(code[i]);
       }      
       info.encode_pcode.push_back(en);
-      // info.decode_pcode.push_back(de);
       delete de.defuc;
     }    
     return;
