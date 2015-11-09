@@ -90,7 +90,6 @@ public:
   
   void * copy(unsigned char * buf)
   {
-    //sort( addr_used.begin(  ) , addr_used.end(  ));
     addr_used_sort();
     for (list<space>::iterator iter = addr_used.begin( ) ; iter !=
            addr_used.end(  ); ++iter)
@@ -125,8 +124,9 @@ public:
 
 #ifdef _DEBUG
     char buildvmcode_name[256];
-    sprintf(buildvmcode_name,"virtual_machine_assembly/buildvmcode%d.log",vmcode_piece_count++);
-    FILE *file = fopen(buildvmcode_name,"wb");
+    sprintf_s(buildvmcode_name, 256, "virtual_machine_assembly/buildvmcode%d.log",vmcode_piece_count++);
+    FILE *file;
+    fopen_s(&file, buildvmcode_name, "wb");
 #endif
  
     for (list<space>::iterator iter = addr_used.begin( ) ;
