@@ -1,7 +1,6 @@
 #ifndef BUILD_INFO_HPP
 #define BUILD_INFO_HPP
 
-#include <iostream>
 #include <list>
 
 struct Code_Piece
@@ -52,4 +51,4 @@ class BuildExeInfo {
     }
 };
 
-#endif /* end of include guard: BUILD_INFO_HPP */     
+#endif /* BUILD_INFO_HPP */
