@@ -519,7 +519,8 @@ void Analysis::printf_piece(std::vector<CodePiece> & var_piece)
       iter != var_piece.end();iter++)
   {
     char * opcode_attribute = NULL;
-    switch (iter->get_opcode_attribute()) {
+    switch (iter->get_opcode_attribute())
+    {
     case OPCODE_ATTRIBUTE_CALL:
         opcode_attribute = "OPCODE_ATTRIBUTE_CALL";
         break;
@@ -551,7 +552,7 @@ void Analysis::printf_piece(std::vector<CodePiece> & var_piece)
         opcode_attribute = "NO_ATTRIBUTE";
         break;
     }
-    printf("\033[31m标签:%08x,\033[34m跳转到:%08x\033[0m,条件跳转:%d,代码块属性%s\n",
+    printf("标签:%08x, 跳转到:%08x, 条件跳转:%d, 代码块属性:%s\n",
            iter->get_label(),
            iter->get_jmplabel(),
            iter->get_is_jcc(),
