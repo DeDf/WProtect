@@ -136,9 +136,10 @@ void get_wprotect_sdk_address(CPESection & section,
 
 void buildvm_test(BuildExeInfo & build_info)
 {
-    CPEFile file;
     char * build_exec_name = build_info.get_filename();
+    printf("待处理文件：%s\n", build_exec_name);
 
+        CPEFile file;
     if (!file.LoadPEFile(build_exec_name))
     {
         printf("file is not find!\n");
@@ -200,7 +201,8 @@ void buildvm_test(BuildExeInfo & build_info)
     }
 
 #ifdef _DEBUG
-    FILE *pfile = fopen( "virtualmachine","wb" );
+    FILE *pfile;
+    fopen_s( &pfile, "virtualmachine", "wb" );
     fwrite( pvm->vm_info.buf, 1, pvm->vm_info.size, pfile );
     fclose( pfile );
 #endif
