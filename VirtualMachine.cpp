@@ -187,6 +187,7 @@ void VirtualMachine::build_vm_handle(long base)
   };
 
   unsigned long handle_count = sizeof(handle_array) / sizeof (v_handle);
+  printf("¹²ÓÐ%d¸öVM_handle\n", handle_count);
   upset<v_handle>(handle_array,handle_count);
 
   handle_info info;
