@@ -1,14 +1,7 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
 
-// [Guard]
 #ifndef _ASMJIT_UTIL_H
 #define _ASMJIT_UTIL_H
 
-// [Dependencies]
 #include "Build.h"
 
 #include <stdlib.h>
@@ -680,11 +673,12 @@ struct PodVector
   //! @brief Append @a item to vector.
   bool append(const T& item) ASMJIT_NOTHROW
   {
-    if (_length == _capacity && !_grow()) return false;
+    if (_length == _capacity && !_grow())
+        return false;
 
     memcpy(_data + _length, &item, sizeof(T));
-
     _length++;
+
     return true;
   }
 

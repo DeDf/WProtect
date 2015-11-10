@@ -1118,41 +1118,25 @@ ASMJIT_API Imm uimm(sysuint_t i) ASMJIT_NOTHROW;
 //! @endcode
 struct ASMJIT_HIDDEN Label : public Operand
 {
-  // --------------------------------------------------------------------------
-  // [Construction / Destruction]
-  // --------------------------------------------------------------------------
-
-  //! @brief Create new, unassociated label.
-  inline Label() ASMJIT_NOTHROW : 
-    Operand(_DontInitialize())
+  inline Label() : Operand(_DontInitialize())  // Create new, unassociated label.
   {
     _lbl.op = OPERAND_LABEL;
     _lbl.size = 0;
     _lbl.id = INVALID_VALUE;
   }
 
-  //! @brief Create reference to another label.
-  inline Label(const Label& other) ASMJIT_NOTHROW :
-    Operand(other)
+  inline Label(const Label& other) : Operand(other)  // Create reference to another label.
   {
   }
 
-  //! @brief Destroy the label.
-  inline ~Label() ASMJIT_NOTHROW
+  inline ~Label()
   {
   }
 
-  // --------------------------------------------------------------------------
-  // [Operator Overload]
-  // --------------------------------------------------------------------------
+  inline Label& operator=(const Label& other) { _copy(other); return *this; }
 
-#if !defined(ASMJIT_NODOC)
-  inline Label& operator=(const Label& other)
-  { _copy(other); return *this; }
-
-  inline bool operator==(const Label& other) const ASMJIT_NOTHROW { return _base.id == other._base.id; }
-  inline bool operator!=(const Label& other) const ASMJIT_NOTHROW { return _base.id != other._base.id; }
-#endif // ASMJIT_NODOC
+  inline bool operator==(const Label& other)  { return _base.id == other._base.id; }
+  inline bool operator!=(const Label& other)  { return _base.id != other._base.id; }
 };
 
 // ============================================================================
@@ -1176,8 +1160,8 @@ struct ASMJIT_HIDDEN Mem : public Operand
     _mem.sizePrefix = 0;
     _mem.shift = 0;
 
-    _mem.id = INVALID_VALUE;
-    _mem.base = INVALID_VALUE;
+    _mem.id    = INVALID_VALUE;
+    _mem.base  = INVALID_VALUE;
     _mem.index = INVALID_VALUE;
 
     _mem.target = NULL;

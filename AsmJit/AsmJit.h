@@ -1,10 +1,4 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
 
-// [Guard]
 #ifndef _ASMJIT_H
 #define _ASMJIT_H
 
@@ -324,17 +318,6 @@
 //! @brief Assertion macro. Default implementation calls 
 //! @c AsmJit::assertionFailure() function.
 
-//! @}
-
-
-//! @namespace AsmJit
-//! @brief Main AsmJit library namespace.
-//!
-//! There are not other namespaces used in AsmJit library.
-
-
-// [Includes]
-
 #if defined(_MSC_VER)
 #pragma warning(disable:4311)
 #endif
@@ -352,6 +335,4 @@
 #include "Platform.h"
 #include "Util.h"
 
-
-// [Guard]
 #endif // _ASMJIT_H

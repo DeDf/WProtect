@@ -5,9 +5,9 @@
  */
 
 #include "PCode.hpp"
-#include <iostream>
 #include <string.h>
 #include "algorithms.hpp"
+
 #pragma warning(disable:4244)
 #pragma warning(disable:4996)
 
@@ -133,13 +133,13 @@ size_t PCode::get_code_size()
   return pcode_info.offset;
 }
 
-void PCode::call_encode_pcode_fn(vcode_encryption::MyFn fn,void *data,long * ikey)
+void PCode::call_encode_pcode_fn(vcode_encryption::MyFn fn,void *data,long *ikey)
 {
     using namespace AsmJit;
     AsmJit::Assembler a;
 
     if (*ikey)
-        a.mov(nax,(long)ikey);
+        a.mov(nax,(long)*ikey);
     else
         a.mov(nax,(long)&key);
 
@@ -424,7 +424,7 @@ void PCode::db(unsigned char b)
 #ifdef _DEBUG
                 if (r_pc_size == 0)
                 {
-                    fprintf(v_log,"()\r\n");
+                    fprintf(v_log,"()\n");
                 }
 #endif
                 pVMHandleInfo dispatch_en_key = &pcode_info.handle_table.dispatch;
@@ -436,9 +436,9 @@ void PCode::db(unsigned char b)
                 }
 
                 for (list<vcode_encryption>::reverse_iterator iter =
-                    dispatch_en_key->encode_pcode->rbegin();
+                            dispatch_en_key->encode_pcode->rbegin();
                     iter != dispatch_en_key->encode_pcode->rend();
-                ++iter)
+                    ++iter)
                 {
                     call_encode_pcode_fn(iter->fn,&b,&iter->key);
                 }
@@ -463,7 +463,7 @@ void PCode::db(unsigned char b)
 #ifdef _DEBUG
         if (strcmp(reg_name,"") == 0)
         {
-            fprintf(v_log,"(0%x)\r\n",b);
+            fprintf(v_log,"(0%x)\n",b);
         }
         else
         {
@@ -471,21 +471,20 @@ void PCode::db(unsigned char b)
             {
                 if (b % sizeof(long) == 0)
                 {
-                    fprintf(v_log,"(%s) index:(%x)\r\n",reg_name,b);
+                    fprintf(v_log,"(%s) index:(%x)\n",reg_name,b);
                 }
                 else
                 {
-                    fprintf(v_log,"(%s) index:(%x) offset:(%d)\r\n",reg_name,b / sizeof(long),b % sizeof(long));
+                    fprintf(v_log,"(%s) index:(%x) offset:(%d)\n",reg_name,b / sizeof(long),b % sizeof(long));
                 }
             }
             else
-                fprintf(v_log,"(%s) index:(%x)\r\n",reg_name,b);
+                fprintf(v_log,"(%s) index:(%x)\n",reg_name,b);
             if (b >= REG_NUMBER * 4)
             {
                 printf("虚拟寄存器引索超过边界\n");
                 __asm int 3;
             }
-            //printf("寄存器数量：%d \n",REG_NUMBER);
             strcpy(reg_name,"");
         }
 #endif
@@ -604,13 +603,10 @@ void PCode::dq(unsigned long long q)
     fprintf(v_log,"(0%x)\r\n",q);
 #endif
      for (list<vcode_encryption>::reverse_iterator iter = current_instruction->encode_pcode->rbegin();
-              iter != current_instruction->encode_pcode->rend(); ++iter) //可能出现q_read_mem错误
+              iter != current_instruction->encode_pcode->rend();
+              ++iter) //可能出现q_read_mem错误
      {
        call_encode_pcode_fn(iter->fn,&q,&iter->key);
-       //if (iter2->key)
-       //  iter2->fn(&q,&key);
-       //else
-       //  iter2->fn(&q,&key);
      }
      current_instruction = NULL;    
     r_pc_size = 0;
@@ -650,10 +646,6 @@ void PCode::da(long a)
               iter != current_instruction->encode_pcode->rend(); ++iter) //可能出现q_read_mem错误
      {
        call_encode_pcode_fn(iter->fn,&a,&iter->key);
-       //if (iter2->key)
-       //  iter2->fn(&q,&key);
-       //else
-       //  iter2->fn(&q,&key);
      }
      current_instruction = NULL;    
     r_pc_size = 0;
@@ -779,7 +771,6 @@ void PCode::set_register_name(long _register)
         break;
     }
 
-
     if (_register & T_E32X)
     {   
         if (_register & T_16X)   
@@ -804,10 +795,10 @@ void PCode::set_register_name(long _register)
 
 void PCode::v_push_register(long _register,bool _disable)
 {
-    
 #ifdef _DEBUG
   set_register_name(_register);
 #endif
+
   if (_register & T_INVALID)
   {
   //没找到寄存器
@@ -919,19 +910,15 @@ void PCode::v_push_register(long _register,bool _disable)
       }
       v_reg_context.vr[i].status = _register & disable;
     }
-//    else
-//    {
-      //没有类型的寄存器 没有 寄存器 或者 虚拟上下文环境找不到那个寄存器
-//      break;
-//    }
   }
-  if (size == get_code_size(  ))
+
+  if (size == get_code_size( ))
   {
 #ifdef _DEBUG
       set_register_name(_register);
 
-    cout << "没有找到寄存器"  << reg_name << endl;
-    __asm int 3;
+      printf("没有找到寄存器%s\n", reg_name);
+      __asm int 3;
 #endif
   }
 }
@@ -940,22 +927,22 @@ pvm_reg PCode::find_invalid_register()
 {
   int invalid_register_array[REG_NUMBER];
   int invalid_register_count = 0;
+
   for (int i = 0; i < REG_NUMBER; i++)
   {
-    if (v_reg_context.vr[i].reg_id & T_INVALID)//== T_INVALID)
+    if (v_reg_context.vr[i].reg_id & T_INVALID)
     {
       invalid_register_array[invalid_register_count++] = i;
     }
   }
+
   if (invalid_register_count)
   {
     int r = invalid_register_array[rand()%invalid_register_count];
     return &v_reg_context.vr[r];
   }
-  else
-  {
+
     return NULL;
-  }
 }
 
 void PCode::v_pop_register(long _register)

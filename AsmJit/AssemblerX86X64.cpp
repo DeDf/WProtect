@@ -1,8 +1,4 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
+
 
 #if defined(_MSC_VER)
 #pragma warning(disable:4312)
@@ -55,12 +51,10 @@ struct ASMJIT_HIDDEN TrampolineWriter
   // Write trampoline into code at address @a code that will jump to @a target.
   static void writeTrampoline(uint8_t* code, void* target)
   {
-    // Jmp.
-    code[0] = 0xFF;
-    // ModM (RIP addressing).
-    code[1] = 0x25;
-    // Offset (zero).
-    ((uint32_t*)(code + 2))[0] = 0;
+    code[0] = 0xFF;  // Jmp.
+    code[1] = 0x25;  // ModM (RIP addressing).
+    
+    ((uint32_t*)(code + 2))[0] = 0;  // Offset (zero).
     // Absolute address.
     ((sysuint_t*)(code + TRAMPOLINE_JMP))[0] = (sysuint_t)target;
   }
@@ -72,7 +66,7 @@ struct ASMJIT_HIDDEN TrampolineWriter
 // [AsmJit::AssemblerCore - Construction / Destruction]
 // ============================================================================
 
-AssemblerCore::AssemblerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
+AssemblerCore::AssemblerCore(CodeGenerator* codeGenerator) :
   _zone(16384 - sizeof(Zone::Chunk) - 32),
   _codeGenerator(codeGenerator != NULL ? codeGenerator : CodeGenerator::getGlobal()),
   _logger(NULL),
@@ -86,7 +80,7 @@ AssemblerCore::AssemblerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
 {
 }
 
-AssemblerCore::~AssemblerCore() ASMJIT_NOTHROW
+AssemblerCore::~AssemblerCore()
 {
 }
 
@@ -94,7 +88,7 @@ AssemblerCore::~AssemblerCore() ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Logging]
 // ============================================================================
 
-void AssemblerCore::setLogger(Logger* logger) ASMJIT_NOTHROW
+void AssemblerCore::setLogger(Logger* logger)
 {
   _logger = logger;
 }
@@ -103,17 +97,18 @@ void AssemblerCore::setLogger(Logger* logger) ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Error Handling]
 // ============================================================================
 
-void AssemblerCore::setError(uint32_t error) ASMJIT_NOTHROW
+void AssemblerCore::setError(uint32_t error)
 {
-  _error = error;
-  if (_error == ERROR_NONE) return;
-
-  if (_logger)
-  {
-    _logger->logFormat("*** ASSEMBLER ERROR: %s (%u).\n",
-      getErrorString(error),
-      (unsigned int)error);
-  }
+    _error = error;
+    if (_error)
+    {
+        if (_logger)
+        {
+            _logger->logFormat("*** ASSEMBLER ERROR: %s (%u).\n",
+                getErrorString(error),
+                (unsigned int)error);
+        }
+    }
 }
 
 // ============================================================================
@@ -137,31 +132,26 @@ void AssemblerCore::setProperty(uint32_t propertyId, uint32_t value)
 // [AsmJit::AssemblerCore - Buffer]
 // ============================================================================
 
-void AssemblerCore::clear() ASMJIT_NOTHROW
+void AssemblerCore::clear()
 {
   _buffer.clear();
   _relocData.clear();
   _zone.clear();
-
-  if (_error) setError(ERROR_NONE);
 }
 
-void AssemblerCore::free() ASMJIT_NOTHROW
+void AssemblerCore::free()
 {
   _zone.freeAll();
   _buffer.free();
   _relocData.free();
-
-  if (_error) setError(ERROR_NONE);
 }
 
-uint8_t* AssemblerCore::takeCode() ASMJIT_NOTHROW
+uint8_t* AssemblerCore::takeCode()
 {
   uint8_t* code = _buffer.take();
   _relocData.clear();
   _zone.clear();
 
-  if (_error) setError(ERROR_NONE);
   return code;
 }
 
@@ -169,7 +159,7 @@ uint8_t* AssemblerCore::takeCode() ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Stream Setters / Getters]
 // ============================================================================
 
-void AssemblerCore::setVarAt(sysint_t pos, sysint_t i, uint8_t isUnsigned, uint32_t size) ASMJIT_NOTHROW
+void AssemblerCore::setVarAt(sysint_t pos, sysint_t i, uint8_t isUnsigned, uint32_t size)
 {
   if (size == 1 && !isUnsigned) setByteAt (pos, (int8_t  )i);
   else if (size == 1 &&  isUnsigned) setByteAt (pos, (uint8_t )i);
@@ -189,7 +179,7 @@ void AssemblerCore::setVarAt(sysint_t pos, sysint_t i, uint8_t isUnsigned, uint3
 // [AsmJit::AssemblerCore - Assembler Emitters]
 // ============================================================================
 
-bool AssemblerCore::canEmit() ASMJIT_NOTHROW
+bool AssemblerCore::canEmit()
 {
   // If there is an error, we can't emit another instruction until last error
   // is cleared by calling @c setError(ERROR_NONE). If something caused an error
@@ -208,7 +198,7 @@ bool AssemblerCore::canEmit() ASMJIT_NOTHROW
   return false;
 }
 
-void AssemblerCore::_emitSegmentPrefix(const Operand& rm) ASMJIT_NOTHROW
+void AssemblerCore::_emitSegmentPrefix(const Operand& rm)
 {
   static const uint8_t segmentPrefixCode[6] =
   {
@@ -232,7 +222,7 @@ void AssemblerCore::_emitSegmentPrefix(const Operand& rm) ASMJIT_NOTHROW
 }
 
 void AssemblerCore::_emitModM(
-  uint8_t opReg, const Mem& mem, sysint_t immSize) ASMJIT_NOTHROW
+  uint8_t opReg, const Mem& mem, sysint_t immSize)
 {
   ASMJIT_ASSERT(mem.getType() == OPERAND_MEM);
 
@@ -440,7 +430,7 @@ void AssemblerCore::_emitModM(
 }
 
 void AssemblerCore::_emitModRM(
-  uint8_t opReg, const Operand& op, sysint_t immSize) ASMJIT_NOTHROW
+  uint8_t opReg, const Operand& op, sysint_t immSize)
 {
   ASMJIT_ASSERT(op.getType() == OPERAND_REG || op.getType() == OPERAND_MEM);
 
@@ -451,7 +441,7 @@ void AssemblerCore::_emitModRM(
 }
 
 void AssemblerCore::_emitX86Inl(
-  uint32_t opCode, uint8_t i16bit, uint8_t rexw, uint8_t reg, bool forceRexPrefix) ASMJIT_NOTHROW
+  uint32_t opCode, uint8_t i16bit, uint8_t rexw, uint8_t reg, bool forceRexPrefix)
 {
   // 16-bit prefix.
   if (i16bit) _emitByte(0x66);
@@ -473,7 +463,7 @@ void AssemblerCore::_emitX86Inl(
 
 void AssemblerCore::_emitX86RM(
   uint32_t opCode, uint8_t i16bit, uint8_t rexw, uint8_t o,
-  const Operand& op, sysint_t immSize, bool forceRexPrefix) ASMJIT_NOTHROW
+  const Operand& op, sysint_t immSize, bool forceRexPrefix)
 {
   // 16-bit prefix.
   if (i16bit) _emitByte(0x66);
@@ -498,19 +488,19 @@ void AssemblerCore::_emitX86RM(
   _emitModRM(o, op, immSize);
 }
 
-void AssemblerCore::_emitFpu(uint32_t opCode) ASMJIT_NOTHROW
+void AssemblerCore::_emitFpu(uint32_t opCode)
 {
   _emitOpCode(opCode);
 }
 
-void AssemblerCore::_emitFpuSTI(uint32_t opCode, uint32_t sti) ASMJIT_NOTHROW
+void AssemblerCore::_emitFpuSTI(uint32_t opCode, uint32_t sti)
 {
   // Illegal stack offset.
   ASMJIT_ASSERT(0 <= sti && sti < 8);
   _emitOpCode(opCode + sti);
 }
 
-void AssemblerCore::_emitFpuMEM(uint32_t opCode, uint8_t opReg, const Mem& mem) ASMJIT_NOTHROW
+void AssemblerCore::_emitFpuMEM(uint32_t opCode, uint8_t opReg, const Mem& mem)
 {
   // Segment prefix.
   _emitSegmentPrefix(mem);
@@ -532,7 +522,7 @@ void AssemblerCore::_emitFpuMEM(uint32_t opCode, uint8_t opReg, const Mem& mem) 
 }
 
 void AssemblerCore::_emitMmu(uint32_t opCode, uint8_t rexw, uint8_t opReg,
-  const Operand& src, sysint_t immSize) ASMJIT_NOTHROW
+  const Operand& src, sysint_t immSize)
 {
   // Segment prefix.
   _emitSegmentPrefix(src);
@@ -559,7 +549,7 @@ void AssemblerCore::_emitMmu(uint32_t opCode, uint8_t rexw, uint8_t opReg,
 }
 
 AssemblerCore::LabelLink* AssemblerCore::_emitDisplacement(
-  LabelData& l_data, sysint_t inlinedDisplacement, int size) ASMJIT_NOTHROW
+  LabelData& l_data, sysint_t inlinedDisplacement, int size)
 {
   ASMJIT_ASSERT(l_data.offset == -1);
   ASMJIT_ASSERT(size == 1 || size == 4);
@@ -581,7 +571,7 @@ AssemblerCore::LabelLink* AssemblerCore::_emitDisplacement(
   return link;
 }
 
-void AssemblerCore::_emitJmpOrCallReloc(uint32_t instruction, void* target) ASMJIT_NOTHROW
+void AssemblerCore::_emitJmpOrCallReloc(uint32_t instruction, void* target)
 {
   RelocData rd;
 
@@ -634,13 +624,13 @@ static const char segmentPrefixName[] =
   "gs:\0"
   "\0\0\0\0";
 
-ASMJIT_HIDDEN char* dumpInstructionName(char* buf, uint32_t code) ASMJIT_NOTHROW
+ASMJIT_HIDDEN char* dumpInstructionName(char* buf, uint32_t code)
 {
   ASMJIT_ASSERT(code < _INST_COUNT);
   return Util::mycpy(buf, instructionDescription[code].getName());
 }
 
-ASMJIT_HIDDEN char* dumpRegister(char* buf, uint32_t type, uint32_t index) ASMJIT_NOTHROW
+ASMJIT_HIDDEN char* dumpRegister(char* buf, uint32_t type, uint32_t index)
 {
   // NE == Not-Encodable.
   const char reg8l[] = "al\0\0" "cl\0\0" "dl\0\0" "bl\0\0" "spl\0"  "bpl\0"  "sil\0"  "dil\0" ;
@@ -726,7 +716,7 @@ _EmitID:
   }
 }
 
-ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op, uint32_t memRegType) ASMJIT_NOTHROW
+ASMJIT_HIDDEN char* dumpOperand(char* buf, const Operand* op, uint32_t memRegType)
 {
   if (op->isReg())
   {
@@ -820,7 +810,7 @@ static char* dumpInstruction(char* buf,
   const Operand* o0,
   const Operand* o1,
   const Operand* o2,
-  uint32_t memRegType) ASMJIT_NOTHROW
+  uint32_t memRegType)
 {
   if (emitOptions & EMIT_OPTION_REX_PREFIX ) buf = Util::mycpy(buf, "rex ", 4);
   if (emitOptions & EMIT_OPTION_LOCK_PREFIX) buf = Util::mycpy(buf, "lock ", 5);
@@ -903,22 +893,22 @@ static const Operand::RegData _patchedHiRegs[4] =
   { OPERAND_REG, 1   , { 0        , 0         }, INVALID_VALUE, REG_TYPE_GPB_LO | 7 }
 };
 
-void AssemblerCore::_emitInstruction(uint32_t code) ASMJIT_NOTHROW
+void AssemblerCore::_emitInstruction(uint32_t code)
 {
   _emitInstruction(code, NULL, NULL, NULL);
 }
 
-void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0) ASMJIT_NOTHROW
+void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0)
 {
   _emitInstruction(code, o0, NULL, NULL);
 }
 
-void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1) ASMJIT_NOTHROW
+void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1)
 {
   _emitInstruction(code, o0, o1, NULL);
 }
 
-void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2) ASMJIT_NOTHROW
+void AssemblerCore::_emitInstruction(uint32_t code, const Operand* o0, const Operand* o1, const Operand* o2)
 {
   const Operand* _loggerOperands[3];
 
@@ -2630,7 +2620,7 @@ cleanup:
   _emitOptions = 0;
 }
 
-void AssemblerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint) ASMJIT_NOTHROW
+void AssemblerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint)
 {
   if (!hint)
   {
@@ -2647,7 +2637,7 @@ void AssemblerCore::_emitJcc(uint32_t code, const Label* label, uint32_t hint) A
 // [AsmJit::AssemblerCore - Relocation helpers]
 // ============================================================================
 
-sysuint_t AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const ASMJIT_NOTHROW
+sysuint_t AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const
 {
   // Copy code to virtual memory (this is a given _dst pointer).
   uint8_t* dst = reinterpret_cast<uint8_t*>(_dst);
@@ -2748,7 +2738,7 @@ sysuint_t AssemblerCore::relocCode(void* _dst, sysuint_t addressBase) const ASMJ
 // [AsmJit::AssemblerCore - Embed]
 // ============================================================================
 
-void AssemblerCore::embed(const void* data, sysuint_t size) ASMJIT_NOTHROW
+void AssemblerCore::embed(const void* data, sysuint_t size)
 {
   if (!canEmit()) return;
 
@@ -2780,7 +2770,7 @@ void AssemblerCore::embed(const void* data, sysuint_t size) ASMJIT_NOTHROW
   _buffer.emitData(data, size);
 }
 
-void AssemblerCore::embedLabel(const Label& label) ASMJIT_NOTHROW
+void AssemblerCore::embedLabel(const Label& label)
 {
   ASMJIT_ASSERT(label.getId() != INVALID_VALUE);
   if (!canEmit()) return;
@@ -2826,7 +2816,7 @@ void AssemblerCore::embedLabel(const Label& label) ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Align]
 // ============================================================================
 
-void AssemblerCore::align(uint32_t m) ASMJIT_NOTHROW
+void AssemblerCore::align(uint32_t m)
 {
   if (!canEmit()) return;
   if (_logger) _logger->logFormat(".align %u", (uint)m);
@@ -2950,7 +2940,7 @@ void AssemblerCore::align(uint32_t m) ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Label]
 // ============================================================================
 
-Label AssemblerCore::newLabel() ASMJIT_NOTHROW
+Label AssemblerCore::newLabel()
 {
   Label label;
   label._base.id = (uint32_t)_labelData.getLength() | OPERAND_ID_TYPE_LABEL;
@@ -2963,7 +2953,7 @@ Label AssemblerCore::newLabel() ASMJIT_NOTHROW
   return label;
 }
 
-void AssemblerCore::registerLabels(sysuint_t count) ASMJIT_NOTHROW
+void AssemblerCore::registerLabels(sysuint_t count)
 {
   // Duplicated newLabel() code, but we are not creating Label instances.
   LabelData l_data;
@@ -2973,7 +2963,7 @@ void AssemblerCore::registerLabels(sysuint_t count) ASMJIT_NOTHROW
   for (sysuint_t i = 0; i < count; i++) _labelData.append(l_data);
 }
 
-void AssemblerCore::bind(const Label& label) ASMJIT_NOTHROW
+void AssemblerCore::bind(const Label& label)
 {
   // Only labels created by newLabel() can be used by Assembler.
   ASMJIT_ASSERT(label.getId() != INVALID_VALUE);
@@ -3055,7 +3045,7 @@ void AssemblerCore::bind(const Label& label) ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Make]
 // ============================================================================
 
-void* AssemblerCore::make() ASMJIT_NOTHROW
+void* AssemblerCore::make()
 {
   // Do nothing on error state or when no instruction was emitted.
   if (_error || getCodeSize() == 0)
@@ -3070,7 +3060,7 @@ void* AssemblerCore::make() ASMJIT_NOTHROW
 // [AsmJit::AssemblerCore - Links]
 // ============================================================================
 
-AssemblerCore::LabelLink* AssemblerCore::_newLabelLink() ASMJIT_NOTHROW
+AssemblerCore::LabelLink* AssemblerCore::_newLabelLink()
 {
   LabelLink* link = _unusedLinks;
 
@@ -3097,16 +3087,16 @@ AssemblerCore::LabelLink* AssemblerCore::_newLabelLink() ASMJIT_NOTHROW
 // [AsmJit::Assembler - Construction / Destruction]
 // ============================================================================
 
-Assembler::Assembler(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
+Assembler::Assembler(CodeGenerator* codeGenerator) :
   AssemblerIntrinsics(codeGenerator)
 {
 }
 
-Assembler::~Assembler() ASMJIT_NOTHROW
+Assembler::~Assembler()
 {
 }
 
 } // AsmJit namespace
 
-// [Api-End]
-#include "ApiEnd.h"
+
+#include "ApiEnd.h"    // [Api-End]

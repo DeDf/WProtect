@@ -1,19 +1,8 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
 
-// [Guard]
 #ifndef _ASMJIT_BUILD_H
 #define _ASMJIT_BUILD_H
 
-// [Include]
 #include "Config.h"
-
-// Here should be optional include files that's needed fo successfuly
-// use macros defined here. Remember, AsmJit uses only AsmJit namespace
-// and all macros are used within it.
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -36,20 +25,6 @@
 // ----------------------------------------------------------------------------
 // [AsmJit - Architecture]
 // ----------------------------------------------------------------------------
-
-// define it only if it's not defined. In some systems we can
-// use -D command in compiler to bypass this autodetection.
-/*
-#if !defined(ASMJIT_X86) && !defined(ASMJIT_X64)
-# if defined(__x86_64__) || defined(__LP64) || defined(__IA64__) || \
-     defined(_M_X64)     || defined(_WIN64) 
-#  define ASMJIT_X64 // x86-64
-# else
-// _M_IX86, __INTEL__, __i386__
-#  define ASMJIT_X86
-# endif
-#endif
-*/
 
 #ifdef PROTECT_X64
 # warning "PROTECT_X64"
@@ -180,12 +155,10 @@ namespace AsmJit {
 
 #if defined(__GNUC__) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 
-// Use <stdint.h>
 #include <stdint.h>
 
 #else
 
-// Use typedefs.
 #if defined(_MSC_VER)
 #if (_MSC_VER < 1300)
 typedef char int8_t;
@@ -209,16 +182,16 @@ typedef unsigned __int64 uint64_t;
 #endif // _MSC_VER
 #endif // STDINT.H
 
-typedef unsigned char uchar;
+typedef unsigned char  uchar;
 typedef unsigned short ushort;
-typedef unsigned int uint;
-typedef unsigned long ulong;
+typedef unsigned int   uint;
+typedef unsigned long  ulong;
 
 #if defined(ASMJIT_X86)
-typedef int32_t sysint_t;
+typedef int32_t  sysint_t;
 typedef uint32_t sysuint_t;
 #else
-typedef int64_t sysint_t;
+typedef int64_t  sysint_t;
 typedef uint64_t sysuint_t;
 #endif
 
@@ -245,14 +218,11 @@ private: \
 // [AsmJit - Debug]
 // ----------------------------------------------------------------------------
 
-// If ASMJIT_DEBUG and ASMJIT_NO_DEBUG is not defined then ASMJIT_DEBUG will be
-// detected using the compiler specific macros. This enables to set the build 
-// type using IDE.
 #if !defined(ASMJIT_DEBUG) && !defined(ASMJIT_NO_DEBUG)
 
 #if defined(_DEBUG)
 #define ASMJIT_DEBUG
-#endif // _DEBUG
+#endif
 
 #endif // !ASMJIT_DEBUG && !ASMJIT_NO_DEBUG
   
@@ -274,21 +244,8 @@ ASMJIT_API void assertionFailure(const char* file, int line, const char* exp);
 # endif
 #endif // DEBUG
 
-// GCC warnings fix: I can't understand why GCC has no interface to push/pop
-// specific warnings.
-// #if defined(__GNUC__)
-// # if (__GNUC__ * 10000  + __GNUC_MINOR__ * 100  + __GNUC_PATCHLEVEL__) >= 402001
-// #  pragma GCC diagnostic ignored "-w"
-// # endif
-// #endif // __GNUC__
-
-// ----------------------------------------------------------------------------
-// [AsmJit - OS Support]
-// ----------------------------------------------------------------------------
-
 #if defined(ASMJIT_WINDOWS)
 #include <windows.h>
-#endif // ASMJIT_WINDOWS
+#endif
 
-// [Guard]
 #endif // _ASMJIT_BUILD_H

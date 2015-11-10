@@ -1,10 +1,4 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
 
-// [Guard]
 #ifndef _ASMJIT_UTIL_P_H
 #define _ASMJIT_UTIL_P_H
 
@@ -15,13 +9,6 @@
 #include <string.h>
 
 namespace AsmJit {
-
-//! @addtogroup AsmJit_Util
-//! @{
-
-// ============================================================================
-// [AsmJit::Util]
-// ============================================================================
 
 namespace Util
 {
@@ -103,8 +90,6 @@ namespace Util
     for (i = 0; i < len; i++) p[i] = c;
   }
 } // Util namespace
-
-//! @}
 
 } // AsmJit namespace
 

@@ -253,7 +253,7 @@ void VirtualMachine::add_pcode(AsmJit::Assembler &a,PCode *code,long base,long r
       a.push(ndx);
       break;
     case T_NSP:
-        a.push(nsp);
+      a.push(nsp);
       break;
     case T_NBP:
       a.push(nbp);

@@ -1,21 +1,10 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
 
-// [Guard]
 #ifndef _ASMJIT_CODEGENERATOR_H
 #define _ASMJIT_CODEGENERATOR_H
 
-// [Dependencies]
 #include "Build.h"
 
 namespace AsmJit {
-
-// ============================================================================
-// [Forward Declarations]
-// ============================================================================
 
 struct Assembler;
 struct JitCodeGenerator;
@@ -30,13 +19,7 @@ struct MemoryMarker;
 //! by @c Assembler or @c Compiler.
 struct ASMJIT_API CodeGenerator
 {
-  // --------------------------------------------------------------------------
-  // [Construction / Destruction]
-  // --------------------------------------------------------------------------
-
-  //! @brief Create a @c CodeGenerator instance.
   CodeGenerator();
-  //! @brief Destroy the @c CodeGenerator instance.
   virtual ~CodeGenerator();
 
   // --------------------------------------------------------------------------
@@ -57,10 +40,6 @@ struct ASMJIT_API CodeGenerator
   //!
   //! @retrurn Error value, see @c ERROR_CODE.
   virtual uint32_t generate(void** dest, Assembler* assembler) = 0;
-
-  // --------------------------------------------------------------------------
-  // [Statics]
-  // --------------------------------------------------------------------------
 
   static JitCodeGenerator* getGlobal();
 

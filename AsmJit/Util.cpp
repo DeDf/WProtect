@@ -1,15 +1,8 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
 
-// [Dependencies]
 #include "Build.h"
 #include "Util_p.h"
 
-// [Api-Begin]
-#include "ApiBegin.h"
+#include "ApiBegin.h"  // [Api-Begin]
 
 namespace AsmJit {
 

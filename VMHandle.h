@@ -1,10 +1,10 @@
 #ifndef _VMHANDLE_H_
 #define _VMHANDLE_H_
 
+#include <stdio.h>
 #include <list>
 #include <vector>
 #include "AsmJit/AsmJit.h"
-#include <stdio.h>
 
 #define REG_NUMBER         25 //虚拟机寄存器数量
 #define VMSTACK_MIN_COUNT  25
@@ -41,26 +41,28 @@ typedef struct _decryption_  //解密嵌入程序
 
 typedef struct _handle_info{
 
-  std::vector <encryption> encode_key;
-  std::vector <decryption> decode_key;
-  std::list <vcode_encryption> encode_pcode;
-  std::list <vcode_decryption> decode_pcode;
+    AsmJit::Label *label; //标签指针
 
-  ////////////类型
+#ifdef _DEBUG
+    char handle_name[20];
+#endif
+
+    ////////////类型
 #define READ_BYTE  1
 #define READ_WORD  2
 #define READ_DWORD 4
 #define READ_QWORD 8
 
-  unsigned char * buf;
-  unsigned long size;
-  unsigned long offset;
-  unsigned long type; //1-8是从esi读取的字节
+    unsigned char *buf;
+    unsigned long size;
+    unsigned long offset;
+    unsigned long type; //1-8是从esi读取的字节
 
-#ifdef _DEBUG
-  char handle_name[20];
-#endif
-  AsmJit::Label *label; //标签指针
+    std::vector <encryption> encode_key;
+    std::vector <decryption> decode_key;
+    std::list <vcode_encryption> encode_pcode;
+    std::list <vcode_decryption> decode_pcode;
+  
 }handle_info;
 
 class VMHandle{

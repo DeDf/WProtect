@@ -1,33 +1,19 @@
 ﻿
-// [Guard]
 #ifndef _ASMJIT_ASSEMBLERX86X64_H
 #define _ASMJIT_ASSEMBLERX86X64_H
 
-#if defined(_MSC_VER)
-#pragma warning(disable:4311)
-#endif
-
 #if !defined(_ASMJIT_ASSEMBLER_H)
 #warning "AsmJit/AssemblerX86X64.h can be only included by AsmJit/Assembler.h"
-#endif // _ASMJIT_ASSEMBLER_H
+#endif
 
-// [Dependencies]
 #include "Build.h"
 #include "Defs.h"
 #include "Operand.h"
 #include "Util.h"
 
-// [Api-Begin]
-#include "ApiBegin.h"
+#include "ApiBegin.h"  // [Api-Begin]
 
 namespace AsmJit {
-
-//! @addtogroup AsmJit_Core
-//! @{
-
-// ============================================================================
-// [Forward Declarations]
-// ============================================================================
 
 struct CodeGenerator;
 
@@ -46,43 +32,21 @@ struct CodeGenerator;
 //! @sa @c Assembler.
 struct ASMJIT_API AssemblerCore
 {
-  // --------------------------------------------------------------------------
-  // [Construction / Destruction]
-  // --------------------------------------------------------------------------
+  AssemblerCore(CodeGenerator* codeGenerator);
+  virtual ~AssemblerCore();
 
-  //! @brief Creates Assembler instance.
-  AssemblerCore(CodeGenerator* codeGenerator) ASMJIT_NOTHROW;
-  //! @brief Destroys Assembler instance
-  virtual ~AssemblerCore() ASMJIT_NOTHROW;
-
-  // --------------------------------------------------------------------------
-  // [LabelLink]
-  // --------------------------------------------------------------------------
-
-  //! @brief Data structure used to link linked-labels.
-  struct LabelLink
+  struct LabelLink  // Used to link linked-labels.
   {
-    //! @brief Previous link.
     LabelLink* prev;
-    //! @brief Offset.
     sysint_t offset;
-    //! @brief Inlined displacement.
-    sysint_t displacement;
-    //! @brief RelocId if link must be absolute when relocated.
-    sysint_t relocId;
+    sysint_t displacement;  // Inlined displacement.
+    sysint_t relocId;       // RelocId if link must be absolute when relocated.
   };
 
-  // --------------------------------------------------------------------------
-  // [LabelData]
-  // --------------------------------------------------------------------------
-
-  //! @brief Label data.
   struct LabelData
   {
-    //! @brief Label offset.
     sysint_t offset;
-    //! @brief Label links chain.
-    LabelLink* links;
+    LabelLink* links;       // Label links chain.
   };
 
   // --------------------------------------------------------------------------
@@ -393,7 +357,7 @@ struct ASMJIT_API AssemblerCore
     else if (rm.isMem())
     {
       x = ((reinterpret_cast<const Mem&>(rm).getIndex() & 0x8) != 0) & (reinterpret_cast<const Mem&>(rm).getIndex() != INVALID_VALUE);
-      b = ((reinterpret_cast<const Mem&>(rm).getBase() & 0x8) != 0) & (reinterpret_cast<const Mem&>(rm).getBase() != INVALID_VALUE);
+      b = ((reinterpret_cast<const Mem&>(rm).getBase()  & 0x8) != 0) & (reinterpret_cast<const Mem&>(rm).getBase()  != INVALID_VALUE);
     }
 
     // w Default operand size(0=Default, 1=64-bit).
@@ -671,18 +635,9 @@ protected:
 //! @sa @c Assembler.
 struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 {
-  // --------------------------------------------------------------------------
-  // [Construction / Destruction]
-  // --------------------------------------------------------------------------
-
-  inline AssemblerIntrinsics(CodeGenerator* codeGenerator) ASMJIT_NOTHROW :
-    AssemblerCore(codeGenerator)
+  inline AssemblerIntrinsics(CodeGenerator* codeGenerator) : AssemblerCore(codeGenerator)
   {
   }
-
-  // --------------------------------------------------------------------------
-  // [Embed]
-  // --------------------------------------------------------------------------
 
   //! @brief Add 8-bit integer data to the instuction stream.
   inline void db(uint8_t  x) ASMJIT_NOTHROW { embed(&x, 1); }
@@ -7844,16 +7799,12 @@ struct ASMJIT_HIDDEN AssemblerIntrinsics : public AssemblerCore
 //! @sa @c AssemblerCore, @c AssemblerIntrinsics, @c Operand, @c Compiler.
 struct ASMJIT_API Assembler : public AssemblerIntrinsics
 {
-  Assembler(CodeGenerator* codeGenerator = NULL) ASMJIT_NOTHROW;
-  virtual ~Assembler() ASMJIT_NOTHROW;
+  Assembler(CodeGenerator* codeGenerator = NULL);
+  virtual ~Assembler();
 };
-
-//! @}
 
 } // AsmJit namespace
 
-// [Api-End]
-#include "ApiEnd.h"
+#include "ApiEnd.h"    // [Api-End]
 
-// [Guard]
 #endif // _ASMJIT_ASSEMBLERX86X64_H

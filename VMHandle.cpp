@@ -13,16 +13,16 @@
 
 using namespace AsmJit;
 
-FileLogger logger(stderr);
+FileLogger logger(stdout);
 
 VMHandle::VMHandle()
 {
+    l_initialization = a.newLabel();
+
   	l_b_read_stack = a.newLabel(); //byte
 	l_w_read_stack = a.newLabel(); //word
 	l_d_read_stack = a.newLabel(); //dword
     l_q_read_stack = a.newLabel();
-
-    l_initialization = a.newLabel();
 
     l_b_write_stack = a.newLabel();
     l_w_write_stack = a.newLabel();
@@ -123,19 +123,12 @@ VMHandle::~VMHandle()
 }
 
 
-#define FULL_BEGIN        1
-#define FULL_END          2
-#define FULL_BYTE_DECODE  3
-#define FULL_WORD_DECODE  4
-#define FULL_DWORD_DECODE 5
-#define FULL_QWORD_DECODE 6
-
+#define FULL_BEGIN  1
 
 void c_add(encryption &_en,decryption &_de,const AsmJit::GPReg &_op_r)
 {
-  using namespace AsmJit;
-  _de.defuc = new AsmJit::Assembler;
-  _en.enfuc = new AsmJit::Compiler;
+  _de.defuc = new Assembler;
+  _en.enfuc = new Compiler;
 #ifdef _DEBUG
   _en.enfuc->setLogger(&logger);
 #endif
@@ -143,6 +136,7 @@ void c_add(encryption &_en,decryption &_de,const AsmJit::GPReg &_op_r)
   bool bQ = _op_r.isGPQ();
   bool bW = _op_r.isGPW();
   bool bB = _op_r.isGPB();
+
    if (bB)
    {
       char r = rand()%0x100;  
@@ -208,7 +202,7 @@ void c_sub(encryption &_en,decryption &_de,const AsmJit::GPReg &_op_r)
       char r = rand()%0x100;  
       _de.defuc->sub(_op_r,r);
       _en.enfuc->newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<unsigned char,unsigned char*>());
-        GPVar result(_en.enfuc->newGP());
+      GPVar result(_en.enfuc->newGP());
       _en.enfuc->sub(byte_ptr(_en.enfuc->argGP(0)),r);
       _en.enfuc->movzx(result,byte_ptr(_en.enfuc->argGP(0)));
       _en.enfuc->ret(result);
@@ -481,10 +475,10 @@ void c_dec(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
   else
   {
     _en.enfuc->newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<unsigned long,unsigned long*>());
-      GPVar result(_en.enfuc->newGP());  
+    GPVar result(_en.enfuc->newGP());  
     _en.enfuc->dec(qword_ptr(_en.enfuc->argGP(0)));
     _en.enfuc->mov(result,qword_ptr(_en.enfuc->argGP(0)));
-      _en.enfuc->ret(result);    
+    _en.enfuc->ret(result);    
   }
 #endif
   _en.enfuc->endFunction();
@@ -492,13 +486,13 @@ void c_dec(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
 
 void c_not(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
 {
- using namespace AsmJit;
+  using namespace AsmJit;
   _de.defuc = new AsmJit::Assembler;
   _de.defuc->not_(_op_r);
   _en.enfuc = new AsmJit::Compiler;
 
 #ifdef _DEBUG
-  // _en.enfuc->setLogger(&logger);
+  _en.enfuc->setLogger(&logger);
 #endif
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
@@ -1277,7 +1271,6 @@ void vcode_c_dec(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
   _en.enfuc->mov(ndi,dword_ptr(nsp,_data_));
 #endif
 
-
   if (bB)
   {
     _en.enfuc->dec(byte_ptr(ndi));
@@ -1303,161 +1296,28 @@ void vcode_c_dec(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
   _en.fn = function_cast<vcode_encryption::MyFn>(_en.enfuc->make());
 }
 
+ typedef void (*algorithms_vcode) (vcode_encryption &,vcode_decryption &,const GPReg &,const GPReg &);
+ algorithms_vcode alg_vcode_fuc_array[]=
+ {
+     vcode_c_add,
+     vcode_c_sub,
+     vcode_c_xor,
+     vcode_c_ror,
+     vcode_c_rol,
+     vcode_c_not,
+     vcode_c_inc,
+     vcode_c_dec
+ };
+ int alg_count = sizeof(alg_vcode_fuc_array)/sizeof(alg_vcode_fuc_array[0]);
+
 void VMHandle::full_handle_info(handle_info & info,char flag)
 {
-  if (flag == FULL_BEGIN)
-  {
     info.type = 0;
-     unsigned char * code = a.getCode();
-     info.size = a.getCodeSize();
-     info.buf = &code[a.getCodeSize()];
-     info.offset = a.getOffset();
-     goto encode;
-  }
-  else if (flag == FULL_END)
-  {
-    info.size = a.getCodeSize()-info.size;
-    return;
-    // printf("HANDLE_END\r\n");
-  }
-  else if (flag == FULL_BYTE_DECODE)
-  {
-    info.type = READ_BYTE;
+    unsigned char * code = a.getCode();
+    info.size   = a.getCodeSize();
+    info.buf    = &code[a.getCodeSize()];
+    info.offset = a.getOffset();
 
-    typedef void (*algorithms_vcode) (vcode_encryption &,vcode_decryption &,const GPReg &,const GPReg &);
-    algorithms_vcode alg_vcode_fuc_array[]=
-      {
-        vcode_c_add,
-        vcode_c_sub,
-        vcode_c_xor,
-        vcode_c_ror,
-        vcode_c_rol,
-        vcode_c_not,
-        vcode_c_inc,
-        vcode_c_dec
-       };
-    int alg_count = sizeof(alg_vcode_fuc_array)/sizeof(alg_vcode_fuc_array[0]);
-    int r = rand()%alg_count;
-    vcode_encryption en;
-    vcode_decryption de;
-    en.key = 0;
-    for (int i = 0; i < r; ++i)
-    {
-      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
-      fuc(en,de,AsmJit::al,AsmJit::bl);
-      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
-      {
-        unsigned char * code = de.defuc->getCode();
-        a.db(code[i]);
-      }      
-      info.encode_pcode.push_back(en);
-      delete de.defuc;
-    }
-    return;
-  }
-  else if (flag == FULL_WORD_DECODE)
-  {
-    info.type = READ_WORD;
-    typedef void (*algorithms_vcode) (vcode_encryption &,vcode_decryption &,const GPReg &,const GPReg &);
-    algorithms_vcode alg_vcode_fuc_array[]=
-      {
-         vcode_c_add,
-         vcode_c_sub,
-         vcode_c_xor,
-         vcode_c_ror,
-         vcode_c_rol,
-         vcode_c_not,
-         vcode_c_inc,
-         vcode_c_dec
-       };
-    int alg_count = sizeof(alg_vcode_fuc_array)/sizeof(alg_vcode_fuc_array[0]);
-    int r = rand()%alg_count;
-    vcode_encryption en;
-    vcode_decryption de;
-    en.key = 0;
-    for (int i = 0; i < r; ++i)
-    {
-      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
-      fuc(en,de,AsmJit::ax,AsmJit::bx);
-      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
-      {
-        unsigned char * code = de.defuc->getCode();
-        a.db(code[i]);
-      }      
-      info.encode_pcode.push_back(en);
-      delete de.defuc;
-    }    
-    return;
-  }
-  else if (flag == FULL_DWORD_DECODE)
-  {
-    info.type = READ_DWORD;
-    typedef void (*algorithms_vcode) (vcode_encryption &,vcode_decryption &,const GPReg &,const GPReg &);
-    algorithms_vcode alg_vcode_fuc_array[]=
-      {
-         vcode_c_add,
-         vcode_c_sub,
-         vcode_c_xor,
-         vcode_c_ror,
-         vcode_c_rol,
-         vcode_c_not,
-         vcode_c_inc,
-         vcode_c_dec
-       };
-    int alg_count = sizeof(alg_vcode_fuc_array)/sizeof(alg_vcode_fuc_array[0]);
-    int r = rand()%alg_count;
-    vcode_encryption en;
-    vcode_decryption de;
-    en.key = 0;
-    for (int i = 0; i < r; ++i)
-    {
-      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
-      fuc(en,de,AsmJit::eax,AsmJit::ebx);
-      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
-      {
-        unsigned char * code = de.defuc->getCode();
-        a.db(code[i]);
-      }      
-      info.encode_pcode.push_back(en);
-      delete de.defuc;
-    }    
-    return;
-  }
-  else if (flag == FULL_QWORD_DECODE)
-  {
-    info.type = READ_QWORD;
-    typedef void (*algorithms_vcode) (vcode_encryption &,vcode_decryption &,const GPReg &,const GPReg &);
-    algorithms_vcode alg_vcode_fuc_array[]=
-      {
-         vcode_c_add,
-         vcode_c_sub,
-         vcode_c_xor,
-         vcode_c_ror,
-         vcode_c_rol,
-         vcode_c_not,
-         vcode_c_inc,
-         vcode_c_dec
-       };
-    int alg_count = sizeof(alg_vcode_fuc_array)/sizeof(alg_vcode_fuc_array[0]);
-    int r = rand()%alg_count;
-    vcode_encryption en;
-    vcode_decryption de;
-    en.key = 0;
-    for (int i = 0; i < r; ++i)
-    {
-      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
-      fuc(en,de,nax,nbx);
-      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
-      {
-        unsigned char * code = de.defuc->getCode();
-        a.db(code[i]);
-      }      
-      info.encode_pcode.push_back(en);
-      delete de.defuc;
-    }    
-    return;
-  }
- encode:
   typedef void (*algorithm) (encryption &,decryption &,const AsmJit::GPReg &);
     algorithm alg_fuc_array[] = 
         {
@@ -1496,6 +1356,7 @@ void VMHandle::full_handle_info(handle_info & info,char flag)
         unsigned char * code = de.defuc->getCode();
         a.db(code[i]);
       }
+
 #ifdef _DEBUG
        printf("de地址:%p,子程序地址:%p\n", en.enfuc, fuc);
 #endif
@@ -1531,7 +1392,23 @@ handle_info VMHandle::dispatch(long table_addr)
         a.dec(nsi);
     }
 
-    full_handle_info(info,FULL_BYTE_DECODE);
+    info.type = READ_BYTE;
+    int r = rand()%alg_count;
+    vcode_encryption en;
+    vcode_decryption de;
+    en.key = 0;
+    for (int i = 0; i < r; ++i)
+    {
+        algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
+        fuc(en,de,AsmJit::al,AsmJit::bl);
+        for (int i = 0; i < de.defuc->getCodeSize(); ++i)
+        {
+            unsigned char * code = de.defuc->getCode();
+            a.db(code[i]);
+        }      
+        info.encode_pcode.push_back(en);
+        delete de.defuc;
+    }
 
 #ifdef PROTECT_X64
     a.push(qword_ptr_abs((void*)table_addr,nax,3));
@@ -1540,7 +1417,7 @@ handle_info VMHandle::dispatch(long table_addr)
 #endif
     a.ret();
 
-    full_handle_info(info,FULL_END);
+    info.size = a.getCodeSize()-info.size;
     return info;
 }
 
@@ -1556,7 +1433,24 @@ void VMHandle::read_pc_byte(handle_info & info)
     a.mov(al,byte_ptr(esi,-1));
     a.dec(esi);
   }
-  full_handle_info(info,FULL_BYTE_DECODE);
+
+  info.type = READ_BYTE;
+  int r = rand()%alg_count;
+  vcode_encryption en;
+  vcode_decryption de;
+  en.key = 0;
+  for (int i = 0; i < r; ++i)
+  {
+      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
+      fuc(en,de,AsmJit::al,AsmJit::bl);
+      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
+      {
+          unsigned char * code = de.defuc->getCode();
+          a.db(code[i]);
+      }      
+      info.encode_pcode.push_back(en);
+      delete de.defuc;
+  }
 }
 
 void VMHandle::read_pc_word(handle_info &info)
@@ -1571,7 +1465,24 @@ void VMHandle::read_pc_word(handle_info &info)
     a.mov(ax,word_ptr(esi,-2));
     a.sub(esi,2);
   }
-  full_handle_info(info,FULL_WORD_DECODE);
+
+  info.type = READ_WORD;
+  int r = rand()%alg_count;
+  vcode_encryption en;
+  vcode_decryption de;
+  en.key = 0;
+  for (int i = 0; i < r; ++i)
+  {
+      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
+      fuc(en,de,AsmJit::ax,AsmJit::bx);
+      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
+      {
+          unsigned char * code = de.defuc->getCode();
+          a.db(code[i]);
+      }      
+      info.encode_pcode.push_back(en);
+      delete de.defuc;
+  } 
 }
 
 void VMHandle::read_pc_dword(handle_info &info)
@@ -1586,7 +1497,24 @@ void VMHandle::read_pc_dword(handle_info &info)
     a.mov(eax,dword_ptr(esi,-4));
     a.sub(esi,4);
   }
-  full_handle_info(info,FULL_DWORD_DECODE);
+
+  info.type = READ_DWORD;
+  int r = rand()%alg_count;
+  vcode_encryption en;
+  vcode_decryption de;
+  en.key = 0;
+  for (int i = 0; i < r; ++i)
+  {
+      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
+      fuc(en,de,AsmJit::eax,AsmJit::ebx);
+      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
+      {
+          unsigned char * code = de.defuc->getCode();
+          a.db(code[i]);
+      }      
+      info.encode_pcode.push_back(en);
+      delete de.defuc;
+  } 
 }
 
 void VMHandle::read_pc_qword(handle_info &info)
@@ -1601,7 +1529,24 @@ void VMHandle::read_pc_qword(handle_info &info)
     a.mov(nax,qword_ptr(nsi,-8));
     a.sub(nsi,8);
   }
-  full_handle_info(info,FULL_QWORD_DECODE);
+
+  info.type = READ_QWORD;
+  int r = rand()%alg_count;
+  vcode_encryption en;
+  vcode_decryption de;
+  en.key = 0;
+  for (int i = 0; i < r; ++i)
+  {
+      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
+      fuc(en,de,nax,nbx);
+      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
+      {
+          unsigned char * code = de.defuc->getCode();
+          a.db(code[i]);
+      }      
+      info.encode_pcode.push_back(en);
+      delete de.defuc;
+  }  
 }
 
 handle_info VMHandle::b_read_stack()
@@ -1625,7 +1570,7 @@ handle_info VMHandle::b_read_stack()
   a.mov(byte_ptr(nbp),al);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1650,7 +1595,7 @@ handle_info VMHandle::w_read_stack()
   a.mov(word_ptr(nbp),ax);
   a.jmp(l_check_stack);
 
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1675,7 +1620,7 @@ handle_info VMHandle::d_read_stack()
   a.mov(dword_ptr(nbp),eax);
   a.jmp(l_check_stack);
 
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1700,7 +1645,7 @@ handle_info VMHandle::q_read_stack()
   a.mov(qword_ptr(nbp),nax);
   a.jmp(l_check_stack);
 
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1744,7 +1689,7 @@ handle_info VMHandle::initialization(long pcode_base)
   a.mov(nsi,pcode_base);
   a.jmp(l_dispatch);
 
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1768,7 +1713,7 @@ handle_info VMHandle::b_write_stack()
   a.inc(nbp);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 handle_info VMHandle::w_write_stack()
@@ -1790,7 +1735,7 @@ handle_info VMHandle::w_write_stack()
   a.add(nbp,2);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1813,7 +1758,7 @@ handle_info VMHandle::d_write_stack()
   a.add(nbp,4);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1836,7 +1781,7 @@ handle_info VMHandle::q_write_stack()
   a.add(nbp,8);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1858,7 +1803,7 @@ handle_info VMHandle::b_push_reg()
   a.mov(byte_ptr(nbp),al);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1880,7 +1825,7 @@ handle_info VMHandle::w_puah_reg()
   a.mov(word_ptr(nbp),ax);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1902,7 +1847,7 @@ handle_info VMHandle::d_push_reg()
   a.mov(dword_ptr(nbp),eax);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1924,7 +1869,7 @@ handle_info VMHandle::q_push_reg()
   a.mov(qword_ptr(nbp),nax);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1946,7 +1891,7 @@ handle_info VMHandle::b_pop_reg()
   a.inc(nbp);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1968,7 +1913,7 @@ handle_info VMHandle::w_pop_reg()
   a.add(nbp,2);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -1990,7 +1935,7 @@ handle_info VMHandle::d_pop_reg()
   a.add(nbp,4);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2012,7 +1957,7 @@ handle_info VMHandle::q_pop_reg()
   a.add(nbp,8);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2032,7 +1977,7 @@ handle_info VMHandle::b_push_imm()
   a.mov(byte_ptr(nbp),al);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2052,7 +1997,7 @@ handle_info VMHandle::w_push_imm()
   a.mov(word_ptr(nbp),ax);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2072,7 +2017,7 @@ handle_info VMHandle::d_push_imm()
   a.mov(dword_ptr(nbp),eax);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2092,7 +2037,7 @@ handle_info VMHandle::q_push_imm()
   a.mov(qword_ptr(nbp),nax);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2119,7 +2064,7 @@ handle_info VMHandle::b_shl() //ebp 俩个byte  变成 5个byte 栈顶是eflag
   a.pop(qword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2146,7 +2091,7 @@ handle_info VMHandle::w_shl() //栈顶3个byte变成6个Byte
   a.pop(qword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2174,7 +2119,7 @@ handle_info VMHandle::d_shl() //5 byte  to  8 byte
   a.pop(qword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2201,7 +2146,7 @@ handle_info VMHandle::q_shl() //9 byte to 16 byte
   a.pop(qword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2228,7 +2173,7 @@ handle_info VMHandle::b_shr()
   a.pop(qword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2255,7 +2200,7 @@ handle_info VMHandle::w_shr()
   a.pop(qword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2282,7 +2227,7 @@ handle_info VMHandle::d_shr()
   a.pop(qword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2309,7 +2254,7 @@ handle_info VMHandle::q_shr()
   a.pop(qword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2337,7 +2282,7 @@ handle_info VMHandle::shld() //9byte to 8byte
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2365,7 +2310,7 @@ handle_info VMHandle::shrd()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2395,7 +2340,7 @@ handle_info VMHandle::b_nand() //2byte to 5byte
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2425,7 +2370,7 @@ handle_info VMHandle::w_nand() //4byte to 6byte
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2455,7 +2400,7 @@ handle_info VMHandle::d_nand() //4 byte to 8 byte
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2485,7 +2430,7 @@ handle_info VMHandle::q_nand()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2508,7 +2453,7 @@ handle_info VMHandle::set_pc()
   a.add(nbp,4);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   
   return info;
 }
@@ -2543,7 +2488,7 @@ handle_info VMHandle::ret()
     a.pop(nax);
     a.popf();
     a.ret();
-    full_handle_info(info,FULL_END);
+    info.size = a.getCodeSize()-info.size;
     return info;
 }
 
@@ -2566,7 +2511,7 @@ handle_info VMHandle::push_stack_top_base()
   a.mov(dword_ptr(nbp),nax);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2581,7 +2526,7 @@ handle_info VMHandle::in()
   full_handle_info(info,FULL_BEGIN);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2606,7 +2551,7 @@ handle_info VMHandle::rdtsc()
   a.mov(dword_ptr(nbp,4),nax);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2635,7 +2580,7 @@ handle_info VMHandle::cpuid()
   a.mov(dword_ptr(nbp),ndx);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2647,10 +2592,10 @@ handle_info VMHandle::check_stack()
 #endif  
   a.bind(l_check_stack);
   info.label = &l_check_stack;
-  //full_handle_info(info,FULL_BEGIN);  // 需要手动计算字节
+
   unsigned char * code = a.getCode();
-  info.size = a.getCodeSize();
-  info.buf = &code[a.getCodeSize()];
+  info.size   = a.getCodeSize();
+  info.buf    = &code[a.getCodeSize()];
   info.offset = a.getOffset();
 
 #ifdef PROTECT_X64
@@ -2658,15 +2603,15 @@ handle_info VMHandle::check_stack()
 #else
   int align = 4;
 #endif
+
   a.lea(nax,ptr(ndi,REG_NUMBER * align));
   a.cmp(nbp,nax);
   a.ja(l_dispatch);
   a.mov(ndx,nsp);
   a.lea(ncx,ptr(ndi,REG_NUMBER * align + 4));
   a.sub(ncx,ndx);
-  
   a.jmp(l_dispatch);
-  //full_handle_info(info,FULL_END);
+
   info.size = a.getCodeSize()-info.size;
   return info;
 }
@@ -2690,7 +2635,7 @@ handle_info VMHandle::b_read_mem()
   a.mov(al,byte_ptr(nax));
   a.mov(byte_ptr(nbp),al);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2713,7 +2658,7 @@ handle_info VMHandle::w_read_mem()
   a.mov(ax,word_ptr(nax));
   a.mov(word_ptr(nbp),ax);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2735,7 +2680,7 @@ handle_info VMHandle::d_read_mem()
   a.mov(eax,dword_ptr(nax));
   a.mov(dword_ptr(nbp),eax);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2752,7 +2697,7 @@ handle_info VMHandle::q_read_mem()
   a.mov(nax,qword_ptr(nax));
   a.mov(qword_ptr(nbp),nax);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2776,7 +2721,7 @@ handle_info VMHandle::b_write_mem()
 #endif
   a.mov(byte_ptr(nax),dl);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2800,7 +2745,7 @@ handle_info VMHandle::w_write_mem()
 #endif
   a.mov(byte_ptr(nax),dx);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2824,7 +2769,7 @@ handle_info VMHandle::d_write_mem()
 #endif
   a.mov(dword_ptr(nax),ndx);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2844,7 +2789,7 @@ handle_info VMHandle::q_write_mem()
 
   a.mov(qword_ptr(nax),ndx);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2867,7 +2812,7 @@ handle_info VMHandle::b_push_imm_sx()
   a.mov(dword_ptr(nbp),nax);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2890,7 +2835,7 @@ handle_info VMHandle::w_push_imm_sx()
   a.mov(dword_ptr(nbp),nax);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2914,7 +2859,7 @@ handle_info VMHandle::d_push_imm_sx()
   a.mov(dword_ptr(nbp),nax);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2937,7 +2882,7 @@ handle_info VMHandle::b_push_imm_zx()
   a.mov(dword_ptr(nbp),nax);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2960,7 +2905,7 @@ handle_info VMHandle::w_push_imm_zx()
   a.mov(dword_ptr(nbp),nax);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -2983,7 +2928,7 @@ handle_info VMHandle::d_push_imm_zx()
   a.mov(dword_ptr(nbp),nax);
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3008,7 +2953,7 @@ handle_info VMHandle::b_add()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3032,7 +2977,7 @@ handle_info VMHandle::w_add()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3055,7 +3000,7 @@ handle_info VMHandle::d_add()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3075,7 +3020,7 @@ handle_info VMHandle::q_add()
   a.pop(qword_ptr(nbp));
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3095,7 +3040,7 @@ handle_info VMHandle::pop_stack_top_base()
 #endif
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3123,7 +3068,7 @@ handle_info VMHandle::b_rol()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3149,7 +3094,7 @@ handle_info VMHandle::w_rol()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3175,7 +3120,7 @@ handle_info VMHandle::d_rol()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3201,7 +3146,7 @@ handle_info VMHandle::q_rol()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3231,7 +3176,7 @@ handle_info VMHandle::b_ror()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3257,7 +3202,7 @@ handle_info VMHandle::w_ror()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3283,7 +3228,7 @@ handle_info VMHandle::d_ror()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3309,7 +3254,7 @@ handle_info VMHandle::q_ror()
   a.pop(dword_ptr(nbp));
 #endif
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3343,7 +3288,7 @@ handle_info VMHandle::set_key()
 #endif
   
   a.jmp(l_dispatch);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3366,7 +3311,7 @@ handle_info VMHandle::run_stack_code()
   a.call(ndx);
 
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3384,7 +3329,7 @@ handle_info VMHandle::fstsw()
   a.fstsw(ax);
   a.mov(word_ptr(nbp),ax);
   a.jmp(l_check_stack);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 
@@ -3399,7 +3344,7 @@ handle_info VMHandle::int3()
   full_handle_info(info,FULL_BEGIN);
   a.int3();
   a.jmp(l_dispatch);
-  full_handle_info(info,FULL_END);
+  info.size = a.getCodeSize()-info.size;
   return info;
 }
 #endif

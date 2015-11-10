@@ -1,26 +1,17 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
 
-// [Guard]
 #ifndef _ASMJIT_PLATFORM_H
 #define _ASMJIT_PLATFORM_H
 
-// [Dependencies]
 #include "Build.h"
 
 #if defined(ASMJIT_WINDOWS)
 #include <windows.h>
-#endif // ASMJIT_WINDOWS
-
-#if defined(ASMJIT_POSIX)
+#elif defined(ASMJIT_POSIX)
 #include <pthread.h>
-#endif // ASMJIT_POSIX
+#endif
 
-// [Api-Begin]
-#include "ApiBegin.h"
+
+#include "ApiBegin.h"  // [Api-Begin]
 
 namespace AsmJit {
 
@@ -201,8 +192,7 @@ struct ASMJIT_API VirtualMemory
 
 } // AsmJit namespace
 
-// [Api-End]
-#include "ApiEnd.h"
 
-// [Guard]
+#include "ApiEnd.h"    // [Api-End]
+
 #endif // _ASMJIT_PLATFORM_H
