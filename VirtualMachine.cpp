@@ -30,7 +30,7 @@ VirtualMachine::~VirtualMachine()
   {
     handle_info hi = *iter;
    
-    for (vector <encryption>::iterator eiter = hi.encode_key.begin(); eiter != hi.encode_key.end();++eiter) //删除encode对象
+    for (vector <encryption>::iterator eiter = hi.encode.begin(); eiter != hi.encode.end();++eiter) //删除encode对象
     {
       if (eiter->enfuc)
       {
@@ -187,17 +187,17 @@ void VirtualMachine::build_vm_handle(long base)
   };
 
   unsigned long handle_count = sizeof(handle_array) / sizeof (v_handle);
-  printf("共有%d个VM_handle\n", handle_count);
+  printf("共有0x%x个VM_handle\n", handle_count);
   upset<v_handle>(handle_array,handle_count);
 
   handle_info info;
   for (unsigned int i = 0; i < handle_count; i++)
   {
-     v_handle r_fuc = handle_array[i];
+    v_handle r_fuc = handle_array[i];
     info = (handle.*r_fuc)();
 
 #ifdef _DEBUG
-    printf("%s\n",info.handle_name);
+    printf("0x%2x %s()\n", i, info.handle_name);
 #endif
 
     handle_info_list.push_back(info);
@@ -205,7 +205,7 @@ void VirtualMachine::build_vm_handle(long base)
 
   long size = handle.a.getCodeSize();
 
-  for (unsigned int i = 0; i < (unsigned int)rand() % 0x100; i++)
+  for (unsigned int i = 0; i < (unsigned int)rand() % 0x100; i++)  // 填充垃圾数据
   {
 #ifdef PROTECT_X64
     handle.a.dq(rand());
@@ -214,14 +214,14 @@ void VirtualMachine::build_vm_handle(long base)
 #endif
   }
 
-  dispatch_base = handle.a.getCodeSize() + base;
+  dispatch_base = handle.a.getCodeSize() + base;  // VM_table后的地址
   info = handle.dispatch(base + size);
   
   full_handle_table(base,size);
   
   handle_info_list.push_back(info);
   
-  handle_pcode.dispatch.encode_key   = &handle_info_list.back().encode_key;
+  handle_pcode.dispatch.encode_key   = &handle_info_list.back().encode;
   handle_pcode.dispatch.encode_pcode = &handle_info_list.back().encode_pcode;
 
   handle.a.relocCode(handle.a.getCode(),base);
@@ -349,7 +349,7 @@ ppcode_block_info VirtualMachine::create_function_head(long reloc_base,
       info->a.push(ndx);
       break;
     case T_NSP:
-        info->a.push(nsp);
+      info->a.push(nsp);
       break;
     case T_NBP:
       info->a.push(nbp);
@@ -370,10 +370,7 @@ ppcode_block_info VirtualMachine::create_function_head(long reloc_base,
     case T_KEY:
       info->a.push(v_key);
       break;
-    /*case T_RET:
-      info->a.push(ret_address);
-      break;
-      */
+
 #ifdef PROTECT_X64
     case T_R8:
       info->a.push(r8);
@@ -440,7 +437,6 @@ ppcode_block_info VirtualMachine::add_new_function(long base,PCode *code,long re
     {
       info->a.db(code->pcode_info.buf[i]);
     }
-    //return handle_offset;
   }
   else
   {
@@ -456,11 +452,10 @@ ppcode_block_info VirtualMachine::add_new_function(long base,PCode *code,long re
     {
       info->a.db(code->pcode_info.buf[i]);
     }
-    //    return handle_offset;
   }
 
   info->a.relocCode(info->a.getCode(),base);
-  info->buf = info->a.getCode();
+  info->buf  = info->a.getCode();
   info->size = info->a.getCodeSize();
   pcode_list.push_back(info);
   return info;
@@ -725,7 +720,7 @@ void VirtualMachine::full_handle_table(long base,long table_offset)
     }
 
     instruction->handle_i = (unsigned char)count++;
-    instruction->encode_key = &iter->encode_key;
+    instruction->encode_key = &iter->encode;
     instruction->type = info.type;
     instruction->encode_pcode = &iter->encode_pcode;
   }

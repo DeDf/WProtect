@@ -83,9 +83,7 @@ public:
                 count++;
             }
         }
-        return count;
-        //printf("没有可用的临时寄存器\n");
-        //__asm("int3");       
+        return count;  
     }
     void attach_pcode(PCode * p);
 

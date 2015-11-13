@@ -5,6 +5,7 @@
 #include <list>
 #include <vector>
 #include "AsmJit/AsmJit.h"
+using namespace AsmJit;
 
 #define REG_NUMBER         25 //虚拟机寄存器数量
 #define VMSTACK_MIN_COUNT  25
@@ -13,52 +14,49 @@
 typedef struct _pcode_encryption_
 {
   long key;
-  AsmJit::Assembler *enfuc;
+  Assembler *enfuc;
   typedef void ( *MyFn )( void *,void * );
   MyFn fn;
 }vcode_encryption;
 
 typedef struct _pcode_decryption_
 {
-    AsmJit::Assembler *defuc;
-    int id;
+    Assembler *defuc;
 }vcode_decryption;
 
-typedef struct _encryption_ //加密在PCODE的时候加密
+typedef struct _encryption_  //加密在PCODE的时候加密
 {
+  int key;
+  Compiler  *enfuc;  //ebx的加解
   typedef void ( *MyFn )( void * );
-
-  unsigned long type; //类型包含加密的寄存器和是否有KEY
-  AsmJit::Compiler  *enfuc;  //ebx的加解
-  MyFn fn;
-  int id;
+  MyFn en_fn;
 }encryption;
 
 typedef struct _decryption_  //解密嵌入程序
 {
-  AsmJit::Assembler  *defuc; //这个是解密Key的
+  Assembler  *defuc; //这个是解密Key的
 }decryption;
 
-typedef struct _handle_info{
-
-    AsmJit::Label *label; //标签指针
-
-#ifdef _DEBUG
-    char handle_name[20];
-#endif
-
-    ////////////类型
+////////////类型
 #define READ_BYTE  1
 #define READ_WORD  2
 #define READ_DWORD 4
 #define READ_QWORD 8
+
+typedef struct _handle_info
+{
+    Label *label; //标签指针
+
+#ifdef _DEBUG
+    char handle_name[20];
+#endif
 
     unsigned char *buf;
     unsigned long size;
     unsigned long offset;
     unsigned long type; //1-8是从esi读取的字节
 
-    std::vector <encryption> encode_key;
+    std::vector <encryption> encode;
     std::vector <decryption> decode_key;
     std::list <vcode_encryption> encode_pcode;
     std::list <vcode_decryption> decode_pcode;
@@ -69,8 +67,8 @@ class VMHandle{
 public:
 	VMHandle();
 	~VMHandle();
-public:
-    AsmJit::Assembler a;
+    //
+    Assembler a;
     long key;
     bool sign;
 
@@ -176,99 +174,99 @@ public:
     handle_info int3();
 #endif
     ///////label/////
-    AsmJit::Label l_set_pc;
-    AsmJit::Label l_push_stack_top_base;
-    AsmJit::Label l_pop_stack_top_base;
-    AsmJit::Label l_run_stack_code;
-    AsmJit::Label l_check_stack;
-    AsmJit::Label l_set_key;
-    AsmJit::Label l_key_dispatch;
+    Label l_set_pc;
+    Label l_push_stack_top_base;
+    Label l_pop_stack_top_base;
+    Label l_run_stack_code;
+    Label l_check_stack;
+    Label l_set_key;
+    Label l_key_dispatch;
 
-    AsmJit::Label l_initialization;
-    AsmJit::Label l_dispatch;
-    AsmJit::Label l_ret;
+    Label l_initialization;
+    Label l_dispatch;
+    Label l_ret;
 
-    AsmJit::Label l_b_read_mem;
-    AsmJit::Label l_w_read_mem;
-    AsmJit::Label l_d_read_mem;
-    AsmJit::Label l_q_read_mem;
+    Label l_b_read_mem;
+    Label l_w_read_mem;
+    Label l_d_read_mem;
+    Label l_q_read_mem;
 
-    AsmJit::Label l_b_write_mem;
-    AsmJit::Label l_w_write_mem;
-    AsmJit::Label l_d_write_mem;
-    AsmJit::Label l_q_write_mem;
+    Label l_b_write_mem;
+    Label l_w_write_mem;
+    Label l_d_write_mem;
+    Label l_q_write_mem;
     
-	AsmJit::Label l_b_read_stack; //byte
-	AsmJit::Label l_w_read_stack; //word
-	AsmJit::Label l_d_read_stack; //dword
-    AsmJit::Label l_q_read_stack;
+	Label l_b_read_stack; //byte
+	Label l_w_read_stack; //word
+	Label l_d_read_stack; //dword
+    Label l_q_read_stack;
 
-    AsmJit::Label l_b_write_stack;
-    AsmJit::Label l_w_write_stack;
-    AsmJit::Label l_d_write_stack;
-    AsmJit::Label l_q_write_stack;
+    Label l_b_write_stack;
+    Label l_w_write_stack;
+    Label l_d_write_stack;
+    Label l_q_write_stack;
 
-    AsmJit::Label l_b_push_reg;
-    AsmJit::Label l_w_push_reg;
-    AsmJit::Label l_d_push_reg;
-    AsmJit::Label l_q_push_reg;
+    Label l_b_push_reg;
+    Label l_w_push_reg;
+    Label l_d_push_reg;
+    Label l_q_push_reg;
 
-    AsmJit::Label l_b_pop_reg;
-    AsmJit::Label l_w_pop_reg;
-    AsmJit::Label l_d_pop_reg;
-    AsmJit::Label l_q_pop_reg;
+    Label l_b_pop_reg;
+    Label l_w_pop_reg;
+    Label l_d_pop_reg;
+    Label l_q_pop_reg;
 
-    AsmJit::Label l_b_push_imm;
-    AsmJit::Label l_w_push_imm;
-    AsmJit::Label l_d_push_imm;
-    AsmJit::Label l_q_push_imm;
+    Label l_b_push_imm;
+    Label l_w_push_imm;
+    Label l_d_push_imm;
+    Label l_q_push_imm;
 
-    AsmJit::Label l_b_shl;
-    AsmJit::Label l_w_shl;
-    AsmJit::Label l_d_shl;
-    AsmJit::Label l_q_shl;
+    Label l_b_shl;
+    Label l_w_shl;
+    Label l_d_shl;
+    Label l_q_shl;
 
-    AsmJit::Label l_b_shr;
-    AsmJit::Label l_w_shr;
-    AsmJit::Label l_d_shr;
-    AsmJit::Label l_q_shr;
+    Label l_b_shr;
+    Label l_w_shr;
+    Label l_d_shr;
+    Label l_q_shr;
 
-    AsmJit::Label l_shld;
-    AsmJit::Label l_shrd;
+    Label l_shld;
+    Label l_shrd;
 
-    AsmJit::Label l_b_nand;
-    AsmJit::Label l_w_nand;
-    AsmJit::Label l_d_nand;
-    AsmJit::Label l_q_nand;
+    Label l_b_nand;
+    Label l_w_nand;
+    Label l_d_nand;
+    Label l_q_nand;
 
-    AsmJit::Label l_b_push_imm_sx;
-    AsmJit::Label l_w_push_imm_sx;
-    AsmJit::Label l_d_push_imm_sx;
-    AsmJit::Label l_b_push_imm_zx;
-    AsmJit::Label l_w_push_imm_zx;
-    AsmJit::Label l_d_push_imm_zx;
+    Label l_b_push_imm_sx;
+    Label l_w_push_imm_sx;
+    Label l_d_push_imm_sx;
+    Label l_b_push_imm_zx;
+    Label l_w_push_imm_zx;
+    Label l_d_push_imm_zx;
     
-    AsmJit::Label l_b_add;
-    AsmJit::Label l_w_add;
-    AsmJit::Label l_d_add;
-    AsmJit::Label l_q_add;
+    Label l_b_add;
+    Label l_w_add;
+    Label l_d_add;
+    Label l_q_add;
 
-    AsmJit::Label l_b_rol;
-    AsmJit::Label l_w_rol;
-    AsmJit::Label l_d_rol;
-    AsmJit::Label l_q_rol;
-    AsmJit::Label l_b_ror;
-    AsmJit::Label l_w_ror;
-    AsmJit::Label l_d_ror;
-    AsmJit::Label l_q_ror;
+    Label l_b_rol;
+    Label l_w_rol;
+    Label l_d_rol;
+    Label l_q_rol;
+    Label l_b_ror;
+    Label l_w_ror;
+    Label l_d_ror;
+    Label l_q_ror;
 
-    AsmJit::Label l_in;
-    AsmJit::Label l_rdtsc;
-    AsmJit::Label l_cpuid;
-    AsmJit::Label l_fstsw;
+    Label l_in;
+    Label l_rdtsc;
+    Label l_cpuid;
+    Label l_fstsw;
 
 #ifdef _DEBUG
-    AsmJit::Label l_int3;
+    Label l_int3;
 #endif
 
 private:
@@ -277,6 +275,5 @@ private:
     void read_pc_dword(handle_info &info);
     void read_pc_qword(handle_info &info);
 };
-
 
 #endif /* _VMHANDLE_H_ */

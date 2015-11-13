@@ -17,7 +17,7 @@ using namespace std;
 
 typedef struct PCODE_BLOCK_INFO
 {
-  long entry; //v_init的地址
+  long entry;      //vm_init的地址
   long pcode_base; //pcode地址
   unsigned char *buf;
   unsigned long size;
@@ -61,6 +61,5 @@ class VirtualMachine
   void add_pcode(AsmJit::Assembler &a,PCode *code,long base,long ret_address,long v_key,long decryption_key);
   VirtualMachineCode vm_info;
 };
-
 
 #endif /* _VIRTUALMACHINE_H_ */

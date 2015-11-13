@@ -5,19 +5,29 @@
  */
 
 #include <time.h>
-#include "VMHandle.h"
 #include <string.h>
 #include "algorithms.hpp"
+#include "VMHandle.h"
+
 #pragma warning(disable:4312)
 #pragma warning(disable:4996)
-
-using namespace AsmJit;
 
 FileLogger logger(stdout);
 
 VMHandle::VMHandle()
 {
     l_initialization = a.newLabel();
+    l_set_pc = a.newLabel();
+    l_ret = a.newLabel();
+
+    l_dispatch = a.newLabel();
+    l_check_stack = a.newLabel();
+    l_push_stack_top_base = a.newLabel();
+    l_pop_stack_top_base = a.newLabel();
+    l_run_stack_code = a.newLabel();
+
+    l_set_key = a.newLabel();
+    l_key_dispatch = a.newLabel(); //set_key之后直接跳转到这里
 
   	l_b_read_stack = a.newLabel(); //byte
 	l_w_read_stack = a.newLabel(); //word
@@ -62,20 +72,11 @@ VMHandle::VMHandle()
     l_d_nand = a.newLabel();
     l_q_nand = a.newLabel();
 
-    l_set_pc = a.newLabel();
-    l_ret = a.newLabel();
-
-    l_in = a.newLabel();
-    l_rdtsc = a.newLabel();
-    l_cpuid = a.newLabel();
-    l_check_stack = a.newLabel();
-    l_dispatch = a.newLabel();
-    l_push_stack_top_base = a.newLabel();
-
     l_b_read_mem = a.newLabel();
     l_d_read_mem = a.newLabel();
     l_w_read_mem = a.newLabel();
     l_q_read_mem = a.newLabel();
+
     l_b_write_mem = a.newLabel();
     l_w_write_mem = a.newLabel();
     l_d_write_mem = a.newLabel();
@@ -93,21 +94,20 @@ VMHandle::VMHandle()
     l_w_add = a.newLabel();
     l_d_add = a.newLabel();
     l_q_add = a.newLabel();
-    l_pop_stack_top_base = a.newLabel();
 
     l_b_rol = a.newLabel();
     l_w_rol = a.newLabel();
     l_d_rol = a.newLabel();
     l_q_rol = a.newLabel();
+
     l_b_ror = a.newLabel();
     l_w_ror = a.newLabel();
     l_d_ror = a.newLabel();
     l_q_ror = a.newLabel();
 
-    l_set_key = a.newLabel();
-    l_key_dispatch = a.newLabel();//set_key之后直接跳转到这里
-    l_run_stack_code = a.newLabel();
-
+    l_in    = a.newLabel();
+    l_rdtsc = a.newLabel();
+    l_cpuid = a.newLabel();
     l_fstsw = a.newLabel();
 
 #ifdef _DEBUG
@@ -122,16 +122,14 @@ VMHandle::~VMHandle()
 {
 }
 
-
 #define FULL_BEGIN  1
 
-void c_add(encryption &_en,decryption &_de,const AsmJit::GPReg &_op_r)
+void c_add(encryption &_en,decryption &_de,const GPReg &_op_r)
 {
   _de.defuc = new Assembler;
   _en.enfuc = new Compiler;
-#ifdef _DEBUG
-  _en.enfuc->setLogger(&logger);
-#endif
+  //_en.enfuc->setLogger(&logger);
+
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
   bool bW = _op_r.isGPW();
@@ -171,7 +169,7 @@ void c_add(encryption &_en,decryption &_de,const AsmJit::GPReg &_op_r)
       _en.enfuc->ret(result);
     } else if(bQ)
     {
-       long r = rand();  
+      long r = rand();  
       _de.defuc->add(_op_r,r);
 #ifdef PROTECT_X64
       _en.enfuc->newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<unsigned long,unsigned long*>());
@@ -181,17 +179,15 @@ void c_add(encryption &_en,decryption &_de,const AsmJit::GPReg &_op_r)
       _en.enfuc->mov(result,qword_ptr(_en.enfuc->argGP(0)));
       _en.enfuc->ret(result);
     }
-     _en.enfuc->endFunction();
+      _en.enfuc->endFunction();
 }
 
-void c_sub(encryption &_en,decryption &_de,const AsmJit::GPReg &_op_r)
+void c_sub(encryption &_en,decryption &_de,const GPReg &_op_r)
 {
-  using namespace AsmJit;
-  _de.defuc = new AsmJit::Assembler;
-  _en.enfuc = new AsmJit::Compiler;
-#ifdef _DEBUG
-   _en.enfuc->setLogger(&logger);
-#endif  
+  _de.defuc = new Assembler;
+  _en.enfuc = new Compiler;
+  //_en.enfuc->setLogger(&logger);
+ 
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
   bool bW = _op_r.isGPW();
@@ -245,20 +241,18 @@ void c_sub(encryption &_en,decryption &_de,const AsmJit::GPReg &_op_r)
      _en.enfuc->endFunction();
 }
 
-void c_rol(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
+void c_rol(encryption &_en,decryption &_de,const GPReg & _op_r )
 {
-  using namespace AsmJit;
 #ifdef PROTECT_X64
   char r = rand()%64;
 #else
   char r = rand()%32;
 #endif
-  _de.defuc = new AsmJit::Assembler;
+  _de.defuc = new Assembler;
   _de.defuc->rol(_op_r,r);
-  _en.enfuc = new AsmJit::Compiler;
-#ifdef _DEBUG
-  //  _en.enfuc->setLogger(&logger);
-#endif
+  _en.enfuc = new Compiler;
+  //_en.enfuc->setLogger(&logger);
+
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
   bool bW = _op_r.isGPW();
@@ -308,23 +302,19 @@ void c_rol(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
   _en.enfuc->endFunction();
 }
 
-void c_ror(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
+void c_ror(encryption &_en,decryption &_de,const GPReg & _op_r )
 {
-  using namespace AsmJit;
-
 #ifdef PROTECT_X64
   char r = rand()%64;
 #else
   char r = rand()%32;
 #endif
 
-  _de.defuc = new AsmJit::Assembler;
+  _de.defuc = new Assembler;
   _de.defuc->ror(_op_r,r);
-  _en.enfuc = new AsmJit::Compiler;
+  _en.enfuc = new Compiler;
+  //_en.enfuc->setLogger(&logger);
 
-#ifdef _DEBUG
-    _en.enfuc->setLogger(&logger);
-#endif
 
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
@@ -373,16 +363,13 @@ void c_ror(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
   _en.enfuc->endFunction();  
 }
 
-
-void c_inc(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r)
+void c_inc(encryption &_en,decryption &_de,const GPReg & _op_r)
 {
-  using namespace AsmJit;
-  _de.defuc = new AsmJit::Assembler;
+  _de.defuc = new Assembler;
   _de.defuc->inc(_op_r);
-  _en.enfuc = new AsmJit::Compiler;
-#ifdef _DEBUG
-  // _en.enfuc->setLogger(&logger);
-#endif  
+  _en.enfuc = new Compiler;
+  //_en.enfuc->setLogger(&logger);
+ 
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
   bool bW = _op_r.isGPW();
@@ -393,15 +380,15 @@ void c_inc(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r)
     GPVar result(_en.enfuc->newGP());    
     _en.enfuc->inc(byte_ptr(_en.enfuc->argGP(0)));
     _en.enfuc->movzx(result,byte_ptr(_en.enfuc->argGP(0)));
-      _en.enfuc->ret(result);    
+    _en.enfuc->ret(result);    
   }
   else if (bW)
   {
     _en.enfuc->newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<unsigned short,unsigned short*>());
     GPVar result(_en.enfuc->newGP());  
-     _en.enfuc->inc(word_ptr(_en.enfuc->argGP(0)));
+    _en.enfuc->inc(word_ptr(_en.enfuc->argGP(0)));
     _en.enfuc->movzx(result,word_ptr(_en.enfuc->argGP(0)));
-      _en.enfuc->ret(result);    
+    _en.enfuc->ret(result);    
   }
   else if (bD)
   {
@@ -409,12 +396,12 @@ void c_inc(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r)
     GPVar result(_en.enfuc->newGP());  
     _en.enfuc->inc(dword_ptr(_en.enfuc->argGP(0)));
 #ifdef PROTECT_X64
-      _en.enfuc->mov(result,qword_ptr(_en.enfuc->argGP(0)));
-      _en.enfuc->and_(result,0x00000000ffffffff);        
+    _en.enfuc->mov(result,qword_ptr(_en.enfuc->argGP(0)));
+    _en.enfuc->and_(result,0x00000000ffffffff);        
 #else
     _en.enfuc->mov(result,dword_ptr(_en.enfuc->argGP(0)));
 #endif
-      _en.enfuc->ret(result);    
+    _en.enfuc->ret(result);    
   }
 #ifdef PROTECT_X64
   else
@@ -423,21 +410,19 @@ void c_inc(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r)
     GPVar result(_en.enfuc->newGP());  
     _en.enfuc->inc(qword_ptr(_en.enfuc->argGP(0)));
     _en.enfuc->mov(result,qword_ptr(_en.enfuc->argGP(0)));
-      _en.enfuc->ret(result);    
+    _en.enfuc->ret(result);    
   }
 #endif
   _en.enfuc->endFunction();
 }
 
-void c_dec(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
+void c_dec(encryption &_en,decryption &_de,const GPReg & _op_r )
 {
-  using namespace AsmJit;
-  _de.defuc = new AsmJit::Assembler;
+  _de.defuc = new Assembler;
   _de.defuc->dec(_op_r);
-  _en.enfuc = new AsmJit::Compiler;
-#ifdef _DEBUG
-  // _en.enfuc->setLogger(&logger);
-#endif  
+  _en.enfuc = new Compiler;
+  //_en.enfuc->setLogger(&logger);
+ 
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
   bool bW = _op_r.isGPW();
@@ -484,16 +469,13 @@ void c_dec(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
   _en.enfuc->endFunction();
 }
 
-void c_not(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
+void c_not(encryption &_en,decryption &_de,const GPReg & _op_r )
 {
-  using namespace AsmJit;
-  _de.defuc = new AsmJit::Assembler;
+  _de.defuc = new Assembler;
   _de.defuc->not_(_op_r);
-  _en.enfuc = new AsmJit::Compiler;
+  _en.enfuc = new Compiler;
+  //_en.enfuc->setLogger(&logger);
 
-#ifdef _DEBUG
-  _en.enfuc->setLogger(&logger);
-#endif
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
   bool bW = _op_r.isGPW();
@@ -519,13 +501,15 @@ void c_not(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
     _en.enfuc->newFunction(CALL_CONV_DEFAULT, FunctionBuilder1<unsigned int,unsigned int*>());
     GPVar result(_en.enfuc->newGP());    
     _en.enfuc->not_(dword_ptr(_en.enfuc->argGP(0)));
+
 #ifdef PROTECT_X64
       _en.enfuc->mov(result,qword_ptr(_en.enfuc->argGP(0)));
       _en.enfuc->and_(result,0x00000000ffffffff);             
 #else
     _en.enfuc->mov(result,dword_ptr(_en.enfuc->argGP(0)));
 #endif
-      _en.enfuc->ret(result);    
+
+    _en.enfuc->ret(result);  
   }
 #ifdef PROTECT_X64
   else
@@ -540,17 +524,12 @@ void c_not(encryption &_en,decryption &_de,const AsmJit::GPReg & _op_r )
   _en.enfuc->endFunction();
 }
 
-void c_xor(encryption &_en,decryption &_de,const AsmJit::GPReg  & _op_r)
+void c_xor(encryption &_en,decryption &_de,const GPReg  & _op_r)
 {
-  using namespace AsmJit;
-  
-  _de.defuc = new AsmJit::Assembler;
-  _en.enfuc = new AsmJit::Compiler;
+  _de.defuc = new Assembler;
+  _en.enfuc = new Compiler;
+  //_en.enfuc->setLogger(&logger);
 
-#ifdef _DEBUG
-  //  _en.enfuc->setLogger(&logger);
-#endif
-  
   bool bD = _op_r.isGPD();
   bool bQ = _op_r.isGPQ();
   bool bW = _op_r.isGPW();
@@ -602,20 +581,11 @@ void c_xor(encryption &_en,decryption &_de,const AsmJit::GPReg  & _op_r)
      _en.enfuc->endFunction();
 }
 
-
-
-
-
-void vcode_c_xor(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)
+void vcode_c_xor(vcode_encryption &_en,vcode_decryption &_de,const GPReg  & _rdata,const GPReg & _rkey)
 {
-  using namespace AsmJit;
-  
- _de.defuc = new AsmJit::Assembler;
- _en.enfuc = new AsmJit::Assembler;
-
-#ifdef _DEBUG
- //  _en.enfuc->setLogger(&logger);
-#endif
+ _de.defuc = new Assembler;
+ _en.enfuc = new Assembler;
+ //_en.enfuc->setLogger(&logger);
   
   bool bD = _rdata.isGPD();
   bool bQ = _rdata.isGPQ();
@@ -697,83 +667,42 @@ void vcode_c_xor(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
 #endif
   _en.fn = function_cast<vcode_encryption::MyFn>(_en.enfuc->make());
 }
-  //  f(void data,void key)
-  //push key
-  //push data
 
-void vcode_c_add(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)
+void vcode_c_add(vcode_encryption &_en,vcode_decryption &_de,const GPReg  & _rdata,const GPReg & _rkey)
 {
-  using namespace AsmJit;
-  
- _de.defuc = new AsmJit::Assembler;
- _en.enfuc = new AsmJit::Assembler;
+  //printf("vcode_c_add()\n");
+  _de.defuc = new Assembler;
+  _en.enfuc = new Assembler;
+  //_en.enfuc->setLogger(&logger);
 
-#ifdef _DEBUG
- //  _en.enfuc->setLogger(&logger);
+  _de.defuc->add(_rdata,_rkey);
+
+#ifdef PROTECT_X64
+  _en.enfuc->mov(ndi,qword_ptr(nsp,8));
+  _en.enfuc->mov(nsi,qword_ptr(nsp,16));
+#else
+  _en.enfuc->mov(ndi,dword_ptr(nsp,4));
+  _en.enfuc->mov(nsi,dword_ptr(nsp,8));
 #endif
-  
+
   bool bD = _rdata.isGPD();
   bool bQ = _rdata.isGPQ();
   bool bW = _rdata.isGPW();
   bool bB = _rdata.isGPB();
-  bool b_register = false;
-
-  long _key_ = 0;
-  long _data_ = 1;
-#ifdef PROTECT_X64
-  _key_ = 16;
-  _data_ = 8;
-#else
-  _key_ = 8;
-  _data_ = 4;
-#endif
-  if (rand()%50 >= 25)
-  {
-    b_register = true;
-  }
-  if (b_register)
-  {
-    _en.key = 0;
-    _de.defuc->add(_rdata,_rkey);
-  }
-
-#ifdef PROTECT_X64
-  _en.enfuc->mov(ndi,qword_ptr(nsp,_data_));
-  _en.enfuc->mov(nsi,qword_ptr(nsp,_key_));
-#else
-  _en.enfuc->mov(ndi,dword_ptr(nsp,_data_));
-  _en.enfuc->mov(nsi,dword_ptr(nsp,_key_));
-#endif
-
   if (bB)
   {
-    if (!b_register)
-    {
-      _en.key = rand()%0xff + 1;
-      _de.defuc->add(_rdata,_en.key);
-    }
     _en.enfuc->mov(al,byte_ptr(nsi));
     _en.enfuc->sub(byte_ptr(ndi),al);
     _en.enfuc->ret();
   }
   else if (bW)
   {
-    if (!b_register)
-    {
-      _en.key = rand()%0xffff + 1;
-      _de.defuc->add(_rdata,_en.key);
-    }
     _en.enfuc->mov(ax,word_ptr(nsi));
     _en.enfuc->sub(word_ptr(ndi),ax);
     _en.enfuc->ret();    
   }
   else if (bD)
   {
-    if (!b_register)
-    {
-      _en.key = rand()%0xffffffff + 1;
-      _de.defuc->add(_rdata,_en.key);
-    }
     _en.enfuc->mov(eax,dword_ptr(nsi));
     _en.enfuc->sub(dword_ptr(ndi),eax);
     _en.enfuc->ret();    
@@ -781,92 +710,50 @@ void vcode_c_add(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
 #ifdef PROTECT_X64
   else if (bQ)
   {
-    if (!b_register)
-    {
-      _en.key = rand()%0xffffffffffffffff + 1;
-      _de.defuc->add(_rdata,_en.key);
-    }
     _en.enfuc->mov(rax,qword_ptr(nsi));
     _en.enfuc->sub(qword_ptr(ndi),rax);
     _en.enfuc->ret();
   }
 #endif
+
   _en.fn = function_cast<vcode_encryption::MyFn>(_en.enfuc->make());
 }
 
-void vcode_c_sub(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)
+void vcode_c_sub(vcode_encryption &_en,vcode_decryption &_de,const GPReg  & _rdata,const GPReg & _rkey)
 {
-  using namespace AsmJit;
-  
- _de.defuc = new AsmJit::Assembler;
- _en.enfuc = new AsmJit::Assembler;
+  //printf("vcode_c_sub()\n");
+  _de.defuc = new Assembler;
+  _en.enfuc = new Assembler;
+  //_en.enfuc->setLogger(&logger);
 
-#ifdef _DEBUG
- //  _en.enfuc->setLogger(&logger);
+  _de.defuc->sub(_rdata,_rkey);
+
+#ifdef PROTECT_X64
+  _en.enfuc->mov(ndi,qword_ptr(nsp,8));
+  _en.enfuc->mov(nsi,qword_ptr(nsp,16));
+#else
+  _en.enfuc->mov(ndi,dword_ptr(nsp,4));
+  _en.enfuc->mov(nsi,dword_ptr(nsp,8));
 #endif
-  
+
   bool bD = _rdata.isGPD();
   bool bQ = _rdata.isGPQ();
   bool bW = _rdata.isGPW();
   bool bB = _rdata.isGPB();
-  bool b_register = false;
-
-  long _key_ = 0;
-  long _data_ = 1;
-#ifdef PROTECT_X64
-  _key_ = 16;
-  _data_ = 8;
-#else
-  _key_ = 8;
-  _data_ = 4;
-#endif
-  if (rand()%50 >= 25)
-  {
-    b_register = true;
-  }
-  if (b_register)
-  {
-    _en.key = 0;
-    _de.defuc->sub(_rdata,_rkey);
-  }
-
-#ifdef PROTECT_X64
-  _en.enfuc->mov(ndi,qword_ptr(nsp,_data_));
-  _en.enfuc->mov(nsi,qword_ptr(nsp,_key_));
-#else
-  _en.enfuc->mov(ndi,dword_ptr(nsp,_data_));
-  _en.enfuc->mov(nsi,dword_ptr(nsp,_key_));
-#endif
-
   if (bB)
   {
-    if (!b_register)
-    {
-      _en.key = rand()%0xff + 1;
-      _de.defuc->sub(_rdata,_en.key);
-    }
     _en.enfuc->mov(al,byte_ptr(nsi));
     _en.enfuc->add(byte_ptr(ndi),al);
     _en.enfuc->ret();
   }
   else if (bW)
   {
-    if (!b_register)
-    {
-      _en.key = rand()%0xffff + 1;
-      _de.defuc->sub(_rdata,_en.key);
-    }
     _en.enfuc->mov(ax,word_ptr(nsi));
     _en.enfuc->add(word_ptr(ndi),ax);
     _en.enfuc->ret();    
   }
   else if (bD)
   {
-    if (!b_register)
-    {
-      _en.key = rand()%0xffffffff + 1;
-      _de.defuc->sub(_rdata,_en.key);
-    }
     _en.enfuc->mov(eax,dword_ptr(nsi));
     _en.enfuc->add(dword_ptr(ndi),eax);
     _en.enfuc->ret();    
@@ -874,22 +761,17 @@ void vcode_c_sub(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
 #ifdef PROTECT_X64
   else if (bQ)
   {
-    if (!b_register)
-    {
-      _en.key = rand()%0xffffffffffffffff + 1;
-      _de.defuc->sub(_rdata,_en.key);
-    }
     _en.enfuc->mov(rax,qword_ptr(nsi));
     _en.enfuc->add(qword_ptr(ndi),rax);
     _en.enfuc->ret();
   }
 #endif
+
   _en.fn = function_cast<vcode_encryption::MyFn>(_en.enfuc->make());
 }
 
 const GPReg & get_register_l(const GPReg & r)
 {
-  using namespace AsmJit;
   GPReg reg_array[4][8]=
     {
       al,bl,cl,dl,ah,bh,ch,dh,
@@ -913,16 +795,11 @@ const GPReg & get_register_l(const GPReg & r)
   return reg_array[0][0];
 }
 
-void vcode_c_ror(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)
+void vcode_c_ror(vcode_encryption &_en,vcode_decryption &_de,const GPReg  & _rdata,const GPReg & _rkey)
 {
-  using namespace AsmJit;
-  
- _de.defuc = new AsmJit::Assembler;
- _en.enfuc = new AsmJit::Assembler;
-
-#ifdef _DEBUG
- //  _en.enfuc->setLogger(&logger);
-#endif
+ _de.defuc = new Assembler;
+ _en.enfuc = new Assembler;
+ //_en.enfuc->setLogger(&logger);
   
   bool bD = _rdata.isGPD();
   bool bQ = _rdata.isGPQ();
@@ -933,6 +810,7 @@ void vcode_c_ror(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
   long _key_ = 0;
   long _data_ = 1;
   long max_r;
+
 #ifdef PROTECT_X64
   _key_ = 16;
   _data_ = 8;
@@ -942,17 +820,6 @@ void vcode_c_ror(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
   _data_ = 4;
   max_r = 32;
 #endif
-  if (rand()%50 >= 25)
-  {
-    b_register = true;//进入这里会计算错误
-  }
-  b_register = false;
-  if (b_register)
-  {
-    _en.key = 0;
-    _de.defuc->mov(AsmJit::cl,get_register_l(_rkey));
-    _de.defuc->ror(_rdata,AsmJit::cl);
-  }
 
 #ifdef PROTECT_X64
   _en.enfuc->mov(ndi,qword_ptr(nsp,_data_));
@@ -1008,20 +875,16 @@ void vcode_c_ror(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
     _en.enfuc->ret();
   }
 #endif
+
   _en.fn = function_cast<vcode_encryption::MyFn>(_en.enfuc->make());
 }
 
 
-void vcode_c_rol(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)
+void vcode_c_rol(vcode_encryption &_en,vcode_decryption &_de,const GPReg  & _rdata,const GPReg & _rkey)
 {
-  using namespace AsmJit;
-  
- _de.defuc = new AsmJit::Assembler;
- _en.enfuc = new AsmJit::Assembler;
-
-#ifdef _DEBUG
- //  _en.enfuc->setLogger(&logger);
-#endif
+ _de.defuc = new Assembler;
+ _en.enfuc = new Assembler;
+ //_en.enfuc->setLogger(&logger);
   
   bool bD = _rdata.isGPD();
   bool bQ = _rdata.isGPQ();
@@ -1049,8 +912,8 @@ void vcode_c_rol(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
   if (b_register)
   {
     _en.key = 0;
-    _de.defuc->mov(AsmJit::cl,get_register_l(_rkey));
-    _de.defuc->rol(_rdata,AsmJit::cl);
+    _de.defuc->mov(cl,get_register_l(_rkey));
+    _de.defuc->rol(_rdata,cl);
   }
 
 #ifdef PROTECT_X64
@@ -1110,16 +973,11 @@ void vcode_c_rol(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
   _en.fn = function_cast<vcode_encryption::MyFn>(_en.enfuc->make());
 }
 
-void vcode_c_not(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)
+void vcode_c_not(vcode_encryption &_en,vcode_decryption &_de,const GPReg  & _rdata,const GPReg & _rkey)
 {
-  using namespace AsmJit;
-  
- _de.defuc = new AsmJit::Assembler;
- _en.enfuc = new AsmJit::Assembler;
-
-#ifdef _DEBUG
- //  _en.enfuc->setLogger(&logger);
-#endif
+ _de.defuc = new Assembler;
+ _en.enfuc = new Assembler;
+ //_en.enfuc->setLogger(&logger);
   
   bool bD = _rdata.isGPD();
   bool bQ = _rdata.isGPQ();
@@ -1172,16 +1030,11 @@ void vcode_c_not(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
   _en.fn = function_cast<vcode_encryption::MyFn>(_en.enfuc->make());
 }
 
-void vcode_c_dec(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)
+void vcode_c_dec(vcode_encryption &_en,vcode_decryption &_de,const GPReg  & _rdata,const GPReg & _rkey)
 {
-  using namespace AsmJit;
-  
- _de.defuc = new AsmJit::Assembler;
- _en.enfuc = new AsmJit::Assembler;
-
-#ifdef _DEBUG
- //   _en.enfuc->setLogger(&logger);
-#endif
+  _de.defuc = new Assembler;
+  _en.enfuc = new Assembler;
+  //_en.enfuc->setLogger(&logger);
   
   bool bD = _rdata.isGPD();
   bool bQ = _rdata.isGPQ();
@@ -1235,16 +1088,11 @@ void vcode_c_dec(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
 }
 
 
- void vcode_c_inc(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg  & _rdata,const AsmJit::GPReg & _rkey)
+void vcode_c_inc(vcode_encryption &_en,vcode_decryption &_de,const GPReg  & _rdata,const GPReg & _rkey)
 {
-  using namespace AsmJit;
-  
- _de.defuc = new AsmJit::Assembler;
- _en.enfuc = new AsmJit::Assembler;
-
-#ifdef _DEBUG
- //  _en.enfuc->setLogger(&logger);
-#endif
+  _de.defuc = new Assembler;
+  _en.enfuc = new Assembler;
+  //_en.enfuc->setLogger(&logger);
   
   bool bD = _rdata.isGPD();
   bool bQ = _rdata.isGPQ();
@@ -1296,79 +1144,67 @@ void vcode_c_dec(vcode_encryption &_en,vcode_decryption &_de,const AsmJit::GPReg
   _en.fn = function_cast<vcode_encryption::MyFn>(_en.enfuc->make());
 }
 
- typedef void (*algorithms_vcode) (vcode_encryption &,vcode_decryption &,const GPReg &,const GPReg &);
- algorithms_vcode alg_vcode_fuc_array[]=
+ typedef void (*algorithm) (encryption &,decryption &,const GPReg &);
+ algorithm alg_fuc_array[] = 
  {
-     vcode_c_add,
-     vcode_c_sub,
-     vcode_c_xor,
-     vcode_c_ror,
-     vcode_c_rol,
-     vcode_c_not,
-     vcode_c_inc,
-     vcode_c_dec
+     c_add,
+     c_sub,
+     c_inc,
+     c_dec,
+     c_xor,
+     c_not,
+     c_rol,
+     c_ror
  };
- int alg_count = sizeof(alg_vcode_fuc_array)/sizeof(alg_vcode_fuc_array[0]);
+ int alg_count = sizeof(alg_fuc_array)/sizeof(alg_fuc_array[0]);
 
 void VMHandle::full_handle_info(handle_info & info,char flag)
 {
-    info.type = 0;
-    unsigned char * code = a.getCode();
-    info.size   = a.getCodeSize();
-    info.buf    = &code[a.getCodeSize()];
-    info.offset = a.getOffset();
-
-  typedef void (*algorithm) (encryption &,decryption &,const AsmJit::GPReg &);
-    algorithm alg_fuc_array[] = 
-        {
-          c_add,
-          c_dec,
-          c_inc,
-          c_sub,
-          c_not,
-          c_rol,
-          c_ror,
-          c_xor
-        };
-    int count = sizeof(alg_fuc_array)/sizeof(alg_fuc_array[0]);
-    int r = rand()%count;
-
+    info.type   = 0;
+    info.size   = 0;
+    info.buf    = NULL;
+    info.offset = 0;
     
-    for (int i = 0; i < r; ++i)
+    encryption en;
+    decryption de;
+    de.defuc = NULL;
+    en.enfuc = NULL;
+
+    GPReg random_register_array[] = {bl,bx,ebx,nbx};
+    int size = sizeof(random_register_array)/sizeof(random_register_array[0]);
+
+    algorithm fuc = alg_fuc_array[rand()%alg_count];
+    int r_reg = rand()%size;
+    fuc(en,de,random_register_array[r_reg]);
+
+    unsigned char * code = de.defuc->getCode();
+    int CodeSize         = de.defuc->getCodeSize();
+
+    for (int i = 0; i < CodeSize; ++i)
     {
-      algorithm fuc = alg_fuc_array[rand()%count];
-      encryption en;
-      decryption de;
-      
-      de.defuc = NULL;
-      en.enfuc = NULL;
-      GPReg random_register_array[] = 
-        {
-          bl,bx,ebx,nbx
-        };
-      int size = sizeof(random_register_array)/sizeof(random_register_array[0]);
-
-      int r_reg = rand()%size;
-      fuc(en,de,random_register_array[r_reg]);
-
-      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
-      {
-        unsigned char * code = de.defuc->getCode();
         a.db(code[i]);
-      }
-
-#ifdef _DEBUG
-       printf("de地址:%p,子程序地址:%p\n", en.enfuc, fuc);
-#endif
-      
-      en.fn = function_cast<encryption::MyFn>(en.enfuc->make());
-      info.encode_key.push_back(en);
-
-      long key = 3;
-      delete de.defuc;
-      info.encode_key.back().fn(&key);
     }
+    delete de.defuc;
+
+    en.en_fn = function_cast<encryption::MyFn>(en.enfuc->make());
+    en.key   = rand();
+    info.encode.push_back(en);
+    info.encode.back().en_fn(&en.key);
 }
+
+typedef void (*algorithms_vcode) (vcode_encryption &,vcode_decryption &,const GPReg &,const GPReg &);
+algorithms_vcode alg_vcode_fuc_array[]=
+{
+    vcode_c_add,
+    vcode_c_sub,
+    vcode_c_xor,
+    vcode_c_not,
+    vcode_c_rol,
+    vcode_c_ror,
+    vcode_c_inc,
+    vcode_c_dec
+};
+int alg_vcode_count = sizeof(alg_vcode_fuc_array)/sizeof(alg_vcode_fuc_array[0]);
 
 handle_info VMHandle::dispatch(long table_addr)
 {
@@ -1393,14 +1229,14 @@ handle_info VMHandle::dispatch(long table_addr)
     }
 
     info.type = READ_BYTE;
-    int r = rand()%alg_count;
     vcode_encryption en;
     vcode_decryption de;
     en.key = 0;
+    int r = rand()%alg_vcode_count;
     for (int i = 0; i < r; ++i)
     {
-        algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
-        fuc(en,de,AsmJit::al,AsmJit::bl);
+        algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_vcode_count];
+        fuc(en,de,al,bl);
         for (int i = 0; i < de.defuc->getCodeSize(); ++i)
         {
             unsigned char * code = de.defuc->getCode();
@@ -1423,34 +1259,37 @@ handle_info VMHandle::dispatch(long table_addr)
 
 void VMHandle::read_pc_byte(handle_info & info)
 {
-  if (sign)
-  {
-    a.mov(al,byte_ptr(esi));
-    a.inc(esi);
-  }
-  else
-  {
-    a.mov(al,byte_ptr(esi,-1));
-    a.dec(esi);
-  }
+    if (sign)
+    {
+        a.mov(al,byte_ptr(esi));
+        a.inc(esi);
+    }
+    else
+    {
+        a.mov(al,byte_ptr(esi,-1));
+        a.dec(esi);
+    }
 
-  info.type = READ_BYTE;
-  int r = rand()%alg_count;
-  vcode_encryption en;
-  vcode_decryption de;
-  en.key = 0;
-  for (int i = 0; i < r; ++i)
-  {
-      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
-      fuc(en,de,AsmJit::al,AsmJit::bl);
-      for (int i = 0; i < de.defuc->getCodeSize(); ++i)
-      {
-          unsigned char * code = de.defuc->getCode();
-          a.db(code[i]);
-      }      
-      info.encode_pcode.push_back(en);
-      delete de.defuc;
-  }
+    info.type = READ_BYTE;
+    int r = rand()%alg_vcode_count;
+    vcode_encryption en;
+    vcode_decryption de;
+    en.key = 0;
+    for (int i = 0; i < r; ++i)
+    {
+        algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_vcode_count];
+        fuc(en,de,al,bl);
+
+        unsigned char * code = de.defuc->getCode();
+        int CodeSize = de.defuc->getCodeSize();
+        for (int i = 0; i < CodeSize; ++i)
+        {
+            a.db(code[i]);
+        }
+        delete de.defuc;
+
+        info.encode_pcode.push_back(en);
+    }
 }
 
 void VMHandle::read_pc_word(handle_info &info)
@@ -1467,14 +1306,14 @@ void VMHandle::read_pc_word(handle_info &info)
   }
 
   info.type = READ_WORD;
-  int r = rand()%alg_count;
+  int r = rand()%alg_vcode_count;
   vcode_encryption en;
   vcode_decryption de;
   en.key = 0;
   for (int i = 0; i < r; ++i)
   {
-      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
-      fuc(en,de,AsmJit::ax,AsmJit::bx);
+      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_vcode_count];
+      fuc(en,de,ax,bx);
       for (int i = 0; i < de.defuc->getCodeSize(); ++i)
       {
           unsigned char * code = de.defuc->getCode();
@@ -1499,14 +1338,14 @@ void VMHandle::read_pc_dword(handle_info &info)
   }
 
   info.type = READ_DWORD;
-  int r = rand()%alg_count;
+  int r = rand()%alg_vcode_count;
   vcode_encryption en;
   vcode_decryption de;
   en.key = 0;
   for (int i = 0; i < r; ++i)
   {
-      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
-      fuc(en,de,AsmJit::eax,AsmJit::ebx);
+      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_vcode_count];
+      fuc(en,de,eax,ebx);
       for (int i = 0; i < de.defuc->getCodeSize(); ++i)
       {
           unsigned char * code = de.defuc->getCode();
@@ -1531,13 +1370,13 @@ void VMHandle::read_pc_qword(handle_info &info)
   }
 
   info.type = READ_QWORD;
-  int r = rand()%alg_count;
+  int r = rand()%alg_vcode_count;
   vcode_encryption en;
   vcode_decryption de;
   en.key = 0;
   for (int i = 0; i < r; ++i)
   {
-      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_count];
+      algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_vcode_count];
       fuc(en,de,nax,nbx);
       for (int i = 0; i < de.defuc->getCodeSize(); ++i)
       {

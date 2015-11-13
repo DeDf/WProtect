@@ -18,7 +18,7 @@ public:
         UntimateReducedIns //Ultimate Reduced Instruction Set Computer
     };
 
-    VirtualMachine * ptr_vm;
+    VirtualMachine * pVM;
     VMAddressTable * ptr_addr_table;
     std::map<ud_type,long> mapped_vm_register;
     int newlabel_count;

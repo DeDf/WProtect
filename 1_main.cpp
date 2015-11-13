@@ -139,7 +139,7 @@ void buildvm_test(BuildExeInfo & build_info)
     char * build_exec_name = build_info.get_filename();
     printf("待处理文件：%s\n", build_exec_name);
 
-        CPEFile file;
+    CPEFile file;
     if (!file.LoadPEFile(build_exec_name))
     {
         printf("file is not find!\n");

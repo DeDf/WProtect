@@ -1711,15 +1711,15 @@ struct ASMJIT_HIDDEN GPVar : public BaseVar
   //! Note this will not create a different variable, use @c Compiler::newGP()
   //! if you want to do so. This is only copy-constructor that allows to store
   //! the same variable in different places.
-  inline GPVar(const GPVar& other) ASMJIT_NOTHROW :
-    BaseVar(other) {}
+  inline GPVar(const GPVar& other) : BaseVar(other)
+  {}
 
   // --------------------------------------------------------------------------
   // [GPVar Specific]
   // --------------------------------------------------------------------------
 
   //! @brief Get whether this variable is general purpose BYTE register.
-  inline bool isGPB() const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) <= REG_TYPE_GPB_HI; }
+  inline bool isGPB()   const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) <= REG_TYPE_GPB_HI; }
   //! @brief Get whether this variable is general purpose BYTE.LO register.
   inline bool isGPBLo() const ASMJIT_NOTHROW { return (_var.registerCode & REG_TYPE_MASK) == REG_TYPE_GPB_LO; }
   //! @brief Get whether this variable is general purpose BYTE.HI register.
@@ -1737,7 +1737,7 @@ struct ASMJIT_HIDDEN GPVar : public BaseVar
   // --------------------------------------------------------------------------
 
   //! @brief Cast this variable to 8-bit (LO) part of variable
-  inline GPVar r8() const ASMJIT_NOTHROW { return GPVar(*this, REG_TYPE_GPB_LO, 1); }
+  inline GPVar r8()   const ASMJIT_NOTHROW { return GPVar(*this, REG_TYPE_GPB_LO, 1); }
   //! @brief Cast this variable to 8-bit (LO) part of variable
   inline GPVar r8Lo() const ASMJIT_NOTHROW { return GPVar(*this, REG_TYPE_GPB_LO, 1); }
   //! @brief Cast this variable to 8-bit (HI) part of variable
@@ -1747,14 +1747,11 @@ struct ASMJIT_HIDDEN GPVar : public BaseVar
   inline GPVar r16() const ASMJIT_NOTHROW { return GPVar(*this, REG_TYPE_GPW, 2); }
   //! @brief Cast this variable to 32-bit part of variable
   inline GPVar r32() const ASMJIT_NOTHROW { return GPVar(*this, REG_TYPE_GPD, 4); }
+
 #if defined(ASMJIT_X64)
   //! @brief Cast this variable to 64-bit part of variable
   inline GPVar r64() const ASMJIT_NOTHROW { return GPVar(*this, REG_TYPE_GPQ, 8); }
 #endif // ASMJIT_X64
-
-  // --------------------------------------------------------------------------
-  // [Operator Overload]
-  // --------------------------------------------------------------------------
 
 #if !defined(ASMJIT_NODOC)
   inline GPVar& operator=(const GPVar& other) ASMJIT_NOTHROW
@@ -1762,14 +1759,10 @@ struct ASMJIT_HIDDEN GPVar : public BaseVar
 
   inline bool operator==(const GPVar& other) const ASMJIT_NOTHROW { return _base.id == other._base.id && _var.registerCode == other._var.registerCode; }
   inline bool operator!=(const GPVar& other) const ASMJIT_NOTHROW { return _base.id != other._base.id || _var.registerCode != other._var.registerCode; }
-#endif // ASMJIT_NODOC
-
-  // --------------------------------------------------------------------------
-  // [Private]
-  // --------------------------------------------------------------------------
+#endif
 
 protected:
-  inline GPVar(const GPVar& other, uint32_t registerCode, uint32_t size) ASMJIT_NOTHROW :
+  inline GPVar(const GPVar& other, uint32_t registerCode, uint32_t size) :
     BaseVar(other, registerCode, size)
   {
   }

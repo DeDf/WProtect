@@ -124,20 +124,20 @@ public:
 
 #ifdef _DEBUG
     char buildvmcode_name[256];
-    sprintf_s(buildvmcode_name, 256, "virtual_machine_assembly/buildvmcode%d.log",vmcode_piece_count++);
+    sprintf_s(buildvmcode_name, 256, "buildvmcode%d.log",vmcode_piece_count++);
     FILE *file;
     fopen_s(&file, buildvmcode_name, "wb");
 #endif
- 
-    for (list<space>::iterator iter = addr_used.begin( ) ;
-        iter != addr_used.end(  );
+
+    for (list<space>::iterator iter = addr_used.begin();
+        iter != addr_used.end();
         ++iter)
-    {/*{{{*/
+    {
       space & d = *iter;
       if (d.data.v)
         if (d.end - d.begin != d.data.v->get_code_size())
         {
-          printf("字节不对,分配:%d,使用:%d\r\n",d.end-d.begin,d.data.v->get_code_size());
+          printf("字节不对,分配:%d,使用:%d\n",d.end-d.begin,d.data.v->get_code_size());
           throw;
         }          
       if ( get_sign() )
@@ -199,14 +199,14 @@ public:
           d.data.v = NULL;   
         }
       }
-    }/*}}}*/
+    }
 
 #ifdef _DEBUG
     fclose(file);
 #endif
 
     return buffer;    
-  }
+  }  // copy()
 
   VTable * get_data( long _base )
   {
@@ -262,6 +262,6 @@ public:
     }
     return addr;
   }
-};
+};  // class VMAddressTable
 
 #endif /* _VMADDRESSTABLE_H_ */

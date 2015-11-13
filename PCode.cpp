@@ -139,7 +139,7 @@ void PCode::call_encode_pcode_fn(vcode_encryption::MyFn fn,void *data,long *ikey
     AsmJit::Assembler a;
 
     if (*ikey)
-        a.mov(nax,(long)*ikey);
+        a.mov(nax,(long)ikey);
     else
         a.mov(nax,(long)&key);
 
@@ -432,7 +432,7 @@ void PCode::db(unsigned char b)
                     iter != dispatch_en_key->encode_key->end();
                     ++iter)
                 {
-                    iter->fn(&key);
+                    iter->en_fn(&key);
                 }
 
                 for (list<vcode_encryption>::reverse_iterator iter =
@@ -448,7 +448,7 @@ void PCode::db(unsigned char b)
                     iter2 != instruction->encode_key->end();
                     ++iter2) //可能出现q_read_mem错误
                 {
-                    iter2->fn(&key);
+                    iter2->en_fn(&key);
                 }
 
                 current_instruction = instruction;
@@ -949,6 +949,7 @@ void PCode::v_pop_register(long _register)
 {
 #ifdef _DEBUG
     set_register_name(_register);
+    printf("register : %s\n", reg_name);
 #endif  
 
     for (int i = 0; i < REG_NUMBER; i++)

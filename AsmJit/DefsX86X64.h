@@ -1,31 +1,20 @@
-// [AsmJit]
-// Complete JIT Assembler for C++ Language.
-//
-// [License]
-// Zlib - See COPYING file in this package.
 
-// [Guard]
 #ifndef _ASMJIT_DEFSX86X64_H
 #define _ASMJIT_DEFSX86X64_H
 
 #if !defined(_ASMJIT_DEFS_H)
 #warning "AsmJit/DefsX86X64.h can be only included by AsmJit/Defs.h"
-#endif // _ASMJIT_DEFS_H
+#endif
 
-// [Dependencies]
 #include "Build.h"
 #include "Util.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-// [Api-Begin]
-#include "ApiBegin.h"
+#include "ApiBegin.h"  // [Api-Begin]
 
 namespace AsmJit {
-
-//! @addtogroup AsmJit_Core
-//! @{
 
 // ============================================================================
 // [AsmJit::REG_NUM]
@@ -52,7 +41,7 @@ enum REG_NUM
   REG_NUM_BASE = 8,
 #else
   REG_NUM_BASE = 16,
-#endif // ASMJIT
+#endif
 
   //! @brief Count of general purpose registers.
   //!
@@ -1859,9 +1848,9 @@ enum CALL_CONV
 # endif
 
   CALL_CONV_COMPAT_STDCALL = CALL_CONV_STDCALL,
-  CALL_CONV_COMPAT_CDECL = CALL_CONV_CDECL
+  CALL_CONV_COMPAT_CDECL   = CALL_CONV_CDECL
 
-#else
+#else  // ASMJIT_X86
 
 # if defined(ASMJIT_WINDOWS)
   CALL_CONV_DEFAULT = CALL_CONV_X64W,
@@ -1880,20 +1869,12 @@ enum CALL_CONV
 // [AsmJit::VARIABLE_TYPE]
 // ============================================================================
 
-//! @brief Variable type.
 enum VARIABLE_TYPE
 {
-  // --------------------------------------------------------------------------
-  // [Platform Dependent]
-  // --------------------------------------------------------------------------
+  VARIABLE_TYPE_GPD = 0,  // Variable is 32-bit general purpose register.
+  VARIABLE_TYPE_GPQ = 1,  // Variable is 64-bit general purpose register.
 
-  //! @brief Variable is 32-bit general purpose register.
-  VARIABLE_TYPE_GPD = 0,
-  //! @brief Variable is 64-bit general purpose register.
-  VARIABLE_TYPE_GPQ = 1,
-
-  //! @var VARIABLE_TYPE_GPN
-  //! @brief Variable is system wide general purpose register (32-bit or 64-bit).
+  // VARIABLE_TYPE_GPN - Variable is system wide general purpose register (32-bit or 64-bit).
 #if defined(ASMJIT_X86)
   VARIABLE_TYPE_GPN = VARIABLE_TYPE_GPD,
 #else
@@ -1901,7 +1882,7 @@ enum VARIABLE_TYPE
 #endif
 
   //! @brief Variable is X87 (FPU).
-  VARIABLE_TYPE_X87 = 2,
+  VARIABLE_TYPE_X87    = 2,
 
   //! @brief Variable is X87 (FPU) SP-FP number (float).
   VARIABLE_TYPE_X87_1F = 3,
@@ -1910,10 +1891,10 @@ enum VARIABLE_TYPE
   VARIABLE_TYPE_X87_1D = 4,
 
   //! @brief Variable is MM register / memory location.
-  VARIABLE_TYPE_MM = 5,
+  VARIABLE_TYPE_MM     = 5,
 
   //! @brief Variable is XMM register / memory location.
-  VARIABLE_TYPE_XMM = 6,
+  VARIABLE_TYPE_XMM    = 6,
 
   //! @brief Variable is SSE scalar SP-FP number.
   VARIABLE_TYPE_XMM_1F = 7,
@@ -1941,17 +1922,15 @@ enum VARIABLE_TYPE
 
 #if !defined(ASMJIT_NODOC)
 #if defined(ASMJIT_X86)
-  VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_X87_1F,
+  VARIABLE_TYPE_FLOAT  = VARIABLE_TYPE_X87_1F,
   VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_X87_1D
 #else
-  VARIABLE_TYPE_FLOAT = VARIABLE_TYPE_XMM_1F,
+  VARIABLE_TYPE_FLOAT  = VARIABLE_TYPE_XMM_1F,
   VARIABLE_TYPE_DOUBLE = VARIABLE_TYPE_XMM_1D
 #endif
-#else
-  //! @brief Variable is SP-FP (x87 or xmm).
-  VARIABLE_TYPE_FLOAT = XXX,
-  //! @brief Variable is DP-FP (x87 or xmm).
-  VARIABLE_TYPE_DOUBLE = XXX
+#else  // ASMJIT_NODOC
+  VARIABLE_TYPE_FLOAT  = XXX,  // Variable is SP-FP (x87 or xmm).
+  VARIABLE_TYPE_DOUBLE = XXX   // Variable is DP-FP (x87 or xmm).
 #endif
 };
 
@@ -1969,19 +1948,15 @@ enum VARIABLE_HINT
   //! @brief Spill variable.
   VARIABLE_HINT_SPILL = 1,
   //! @brief Save variable if modified.
-  VARIABLE_HINT_SAVE = 2,
+  VARIABLE_HINT_SAVE  = 2,
   //! @brief Save variable if modified and mark it as unused.
   VARIABLE_HINT_SAVE_AND_UNUSE = 3,
   //! @brief Mark variable as unused.
   VARIABLE_HINT_UNUSE = 4
 };
 
-//! @}
-
 } // AsmJit namespace
 
-// [Api-End]
-#include "ApiEnd.h"
+#include "ApiEnd.h"    // [Api-End]
 
-// [Guard]
 #endif // _ASMJIT_DEFSX86X64_H
