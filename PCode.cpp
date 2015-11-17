@@ -7,6 +7,8 @@
 #include "PCode.hpp"
 #include <string.h>
 #include "algorithms.hpp"
+#define _STDINT_H
+#include "Libudis86/udis86.h"
 
 #pragma warning(disable:4244)
 #pragma warning(disable:4996)
@@ -163,7 +165,7 @@ void PCode::call_encode_pcode_fn(vcode_encryption::MyFn fn,void *data,long *ikey
 
 void PCode::count_vmcode_begin()
 {
-  size_t vmcode_size = 0;
+  vmcode_size = 0;
   is_begin_vmcode = true;
 }
 
@@ -173,43 +175,11 @@ size_t PCode::count_vmcode_end()
   return vmcode_size;
 }
 
-void PCode::recovery_back()
-{
-  for (vector <vmcode_back>::iterator iter = vmcode_vec.begin();
-      iter != vmcode_vec.end();
-      ++iter)
-  {
-    switch (iter->size)
-    {
-    case -1: //重定位数据
-      da(iter->a);
-      break;
-    case 1:
-      db(iter->b);
-      break;
-    case 2:
-      dw(iter->w);
-      break;
-    case 4:
-      dd(iter->d);
-      break;
-    case 8:
-      dq(iter->q);
-      break;
-    }
-  }
-  vmcode_vec.clear();
-}
-
 
 void PCode::db(unsigned char b)
 {
     if (is_begin_vmcode)
     {
-        vmcode_back bak;
-        bak.size = 1;
-        bak.b = b;
-        vmcode_vec.push_back(bak);
         vmcode_size++;
         return;
     }
@@ -222,7 +192,6 @@ void PCode::db(unsigned char b)
         {
             if (instruction->handle_i == b) //获取到handle了
             {
-#ifdef _DEBUG
                 v_log = stdout;
                 char *f = "VM_Handle: ";
                 char *l = "";
@@ -418,21 +387,31 @@ void PCode::db(unsigned char b)
                     fprintf( v_log,"%s%s%s",f,"int3",l);
                 else if (pcode_info.handle_table.fstsw.handle_i == b)
                     fprintf( v_log,"%s%s%s",f,"fstsw",l);
-#endif
-                r_pc_size = instruction->type;
 
-#ifdef _DEBUG
+                r_pc_size = instruction->type;
+                fprintf(v_log,"\n");
+
                 if (r_pc_size == 0)
                 {
                     fprintf(v_log,"()\n");
                 }
-#endif
+
                 pVMHandleInfo dispatch_en_key = &pcode_info.handle_table.dispatch;
                 for (vector<encryption>::iterator iter = dispatch_en_key->encode_key->begin();
                     iter != dispatch_en_key->encode_key->end();
                     ++iter)
                 {
-                    iter->en_fn(&key);
+                    iter->en_fn(&key);  // 对Key进行变换
+
+//                     ud_t ud_obj;
+//                     ud_init(&ud_obj);
+//                     ud_set_mode(&ud_obj, 32);
+//                     ud_set_input_buffer(&ud_obj, (uint8_t*)iter->en_fn, 26);
+//                     ud_set_syntax(&ud_obj, UD_SYN_INTEL);
+//                     printf("\n");
+//                     while (ud_disassemble(&ud_obj)) {
+//                         printf("%s\n",ud_insn_asm(&ud_obj));
+                    //}
                 }
 
                 for (list<vcode_encryption>::reverse_iterator iter =
@@ -512,11 +491,7 @@ void PCode::db(unsigned char b)
 void PCode::dw(unsigned short w)
 {
   if (is_begin_vmcode)
-  {
-    vmcode_back bak;
-    bak.size = 2;
-    bak.w = w;
-    vmcode_vec.push_back(bak);    
+  {   
     vmcode_size+=2;
     return;
   }
@@ -553,11 +528,7 @@ void PCode::dw(unsigned short w)
 void PCode::dd(unsigned int d)
 {
   if (is_begin_vmcode)
-  {
-    vmcode_back bak;
-    bak.size = 4;
-    bak.d = d;
-    vmcode_vec.push_back(bak);    
+  {  
     vmcode_size += 4;
     return;
   } 
@@ -589,14 +560,11 @@ void PCode::dd(unsigned int d)
 void PCode::dq(unsigned long long q)
 {
   if (is_begin_vmcode)
-  {
-    vmcode_back bak;
-    bak.size = 8;
-    bak.q = q;
-    vmcode_vec.push_back(bak);    
+  {   
     vmcode_size += 8;
     return;
-  }  
+  }
+
   if (r_pc_size)
   {
 #ifdef _DEBUG
@@ -625,18 +593,14 @@ void PCode::dq(unsigned long long q)
   pcode_info.offset += 8;
 }
 
-//data address 说明是一个地址
-void PCode::da(long a)
+void PCode::da(long a)  // address 说明是一个地址
 {
   if (is_begin_vmcode)
-  {
-    vmcode_back bak;
-    bak.size = -1; //-1代表重定位数据
-    bak.a = a;
-    vmcode_vec.push_back(bak);    
+  {   
     vmcode_size += sizeof(long);
     return;
-  }  
+  }
+
   if (r_pc_size)
   {
 #ifdef _DEBUG
@@ -981,7 +945,6 @@ void PCode::v_pop_register(long _register)
                     }
                     else  //16位寄存器
                     {
-
                         db(pcode_info.handle_table.w_pop_reg.handle_i);
                         db(reg_offset);
                         v_reg_context.vr[i].status = _register & enable;

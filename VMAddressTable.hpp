@@ -14,11 +14,11 @@
 typedef struct _v_table_
 {
   VCombosVMCode *v;
-  _v_table_(  )
+  _v_table_()
     :vesp_diff( 0 ),key_status( false ),key( 0 ),v( NULL )
   {  
   }
-  ~_v_table_(  )
+  ~_v_table_()
   {  
   }
   long base;
@@ -53,15 +53,16 @@ public:
   }
 
   
-  void update(VCombosVMCode * p ) {
-    for (list<space>::iterator iter = addr_used.begin(  ); iter != addr_used.end(  ); ++iter)
+  void update(VCombosVMCode * p )
+  {
+    for (list<space>::iterator iter = addr_used.begin(); iter != addr_used.end(); ++iter)
     {
       if (iter->data.v == p)
       {
-        if ( get_sign()  )
-          iter->end = iter->begin + p->get_code_size(  ) ;
+        if ( get_sign() )
+          iter->end = iter->begin + p->get_code_size();
         else
-          iter->begin = iter->end - p->get_code_size(  );
+          iter->begin = iter->end - p->get_code_size();
       }
     }
   }
@@ -92,20 +93,20 @@ public:
   {
     addr_used_sort();
     for (list<space>::iterator iter = addr_used.begin( ) ; iter !=
-           addr_used.end(  ); ++iter)
+           addr_used.end(); ++iter)
     {
       space d = *iter;
       if ( get_sign() )
       {
         memcpy(&buf[d.begin - base],
                d.data.v->get_code_buf(),
-               d.data.v->get_code_size(  ));
+               d.data.v->get_code_size());
       }
       else
       {
         memcpy( &buf[ d.begin - base ],
-                d.data.v->get_code_buf(  ),
-                d.data.v->get_code_size(  ));
+                d.data.v->get_code_buf(),
+                d.data.v->get_code_size());
       }  
     }
     return buf;
@@ -166,7 +167,7 @@ public:
         {
             memcpy(&buffer[d.begin - base],
                d.data.v->get_code_buf(),
-               d.data.v->get_code_size(  ));
+               d.data.v->get_code_size());
             d.data.v = NULL;
         }
       }
@@ -194,8 +195,8 @@ public:
         if (d.data.v)        
         {
           memcpy( &buffer[ d.begin - base ],
-                d.data.v->get_code_buf(  ),
-                d.data.v->get_code_size(  ));
+                d.data.v->get_code_buf(),
+                d.data.v->get_code_size());
           d.data.v = NULL;   
         }
       }
@@ -210,27 +211,25 @@ public:
 
   VTable * get_data( long _base )
   {
-    for (list<space>::iterator iter = addr_used.begin( ) ; iter !=
-           addr_used.end(  ); ++iter)
+    for (list<space>::iterator iter = addr_used.begin( ) ;
+        iter != addr_used.end();
+        ++iter)
     {
-      // space d = *iter;
       if (iter->begin == _base)
         return &iter->data;
     }
     return NULL;
   }
 
-  unsigned long get_size( ) const {
+  unsigned long get_size( )
+  {
     return size;
   }
 
   unsigned long assign_address(unsigned long _size,const VTable & _data)
   {
-    
     unsigned long addr = (unsigned long)AddressTable::assign_address(_size, _data);
-    //addr_used.end()->data.base = addr;
     addr_used.back().data.base = addr;
-    //printf("·ÖÅä¿ªÊ¼\n");
     if (buffer)
     {
       if (buffer_size < size)

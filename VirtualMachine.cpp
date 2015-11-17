@@ -6,6 +6,8 @@
 
 #include "VirtualMachine.h"
 #include "PCode.hpp"
+#define _STDINT_H
+#include "Libudis86/udis86.h"
 
 VirtualMachine::VirtualMachine(long base)
 {
@@ -205,7 +207,7 @@ void VirtualMachine::build_vm_handle(long base)
 
   long size = handle.a.getCodeSize();
 
-  for (unsigned int i = 0; i < (unsigned int)rand() % 0x100; i++)  // 填充垃圾数据
+  for (unsigned int i = 0; i < 0xFF; i++)  // 占位置，供full_handle_table用
   {
 #ifdef PROTECT_X64
     handle.a.dq(rand());
@@ -213,12 +215,13 @@ void VirtualMachine::build_vm_handle(long base)
     handle.a.dd(rand());
 #endif
   }
-
+  
   dispatch_base = handle.a.getCodeSize() + base;  // VM_table后的地址
+
   info = handle.dispatch(base + size);
-  
+
   full_handle_table(base,size);
-  
+
   handle_info_list.push_back(info);
   
   handle_pcode.dispatch.encode_key   = &handle_info_list.back().encode;
@@ -228,6 +231,7 @@ void VirtualMachine::build_vm_handle(long base)
   vm_info.base = base;
   vm_info.buf  = handle.a.getCode();
   vm_info.size = handle.a.getCodeSize();
+  printf("vm_info %p, size:0x%x\n", vm_info.buf, vm_info.size);
 }
 
 void VirtualMachine::add_pcode(AsmJit::Assembler &a,PCode *code,long base,long ret_address,long v_key,long decryption_key) //true表示正
@@ -468,21 +472,15 @@ void VirtualMachine::full_handle_table(long base,long table_offset)
   unsigned long * buf = (unsigned long *)(asmbuf + table_offset);
   unsigned long count = 1;
 
-#ifdef _DEBUG
   FILE *file;
   fopen_s(&file, "VMHandleAddress.txt", "wb");
-#endif
 
   for (list <handle_info>::iterator iter = handle_info_list.begin(); iter != handle_info_list.end(); ++iter)
   {
     pVMHandleInfo instruction = NULL;
     handle_info info = *iter;
     buf[count] = info.offset + base;
-
-#ifdef _DEBUG
-    fprintf(file, "handle_addr_name %s\n", info.handle_name);
-    fprintf(file, "mov note,%x\n", buf[count]);
-#endif
+    fprintf(file, "%20s : %x\r\n", info.handle_name, buf[count]);
 
     if ( info.label == &handle.l_b_read_stack )
     {
@@ -714,9 +712,7 @@ void VirtualMachine::full_handle_table(long base,long table_offset)
 
     if (instruction == NULL)
     {
-#ifdef _DEBUG
-      fprintf(stderr,"%s:%d:%s\r\n",__FILE__,__LINE__,info.handle_name);
-#endif    
+      printf("!!ERROR %s:%d:%s\r\n",__FILE__,__LINE__,info.handle_name);
     }
 
     instruction->handle_i = (unsigned char)count++;
@@ -724,4 +720,6 @@ void VirtualMachine::full_handle_table(long base,long table_offset)
     instruction->type = info.type;
     instruction->encode_pcode = &iter->encode_pcode;
   }
+
+  fclose(file);
 }

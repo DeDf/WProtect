@@ -101,9 +101,7 @@ typedef struct _VM_HANDLE_
   VMHandleInfo run_stack;
 
   VMHandleInfo fstsw;
-#ifdef _DEBUG
   VMHandleInfo int3;
-#endif
 
 #ifdef PROTECT_X64
   VMHandleInfo d_push_imm_sx;  
@@ -196,20 +194,6 @@ typedef struct _REGISTER_STORE_
 }RegisterStore,*pRegisterStore;
 
 #define DEFAULT_ALLOC_SIZE 0x150
-
-
-typedef struct _VMCODE_BACK_
-{
-  union 
-  {
-	 long  q;
-	 long  a; //冲定位数据 地址
-	 int   d;
-	 short w;
-     char  b;
-  };
-  size_t size;
-}vmcode_back,*pvmcode_back;
   
 class PCode
 {
@@ -225,8 +209,6 @@ public:
 
   void count_vmcode_begin();
   size_t count_vmcode_end();
-  vector <vmcode_back> vmcode_vec; //计数的时候备份
-  void recovery_back(); //恢复vmcode备份
   
   void check_pcode_buf();
 
@@ -257,18 +239,16 @@ public:
   unsigned int key;
   const unsigned int get_original_key();
   const unsigned int get_current_key();
-  void set_key(const unsigned int _key  );
+  void set_key(const unsigned int _key);
 #endif
 
   pVMHandleInfo current_instruction;
 
-#ifdef _DEBUG
   FILE *v_log;
   char reg_name[256];
   FILE *get_log(){ return v_log; }
   void set_register_name(long _register);
   void out_info(char *_sz);
-#endif
 
   void operator = ( const PCode & rhs )
   {
@@ -279,8 +259,8 @@ public:
 
     if ( _key_ != key )
     {
-      printf("程序已经开始运行,无法改变Key\n");      
-      throw ;
+      printf("程序已经开始运行,无法改变Key\n");    
+      throw;
       return;
     }
     _key_ = rhs.key;

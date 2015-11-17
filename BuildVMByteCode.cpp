@@ -112,7 +112,6 @@ void printf_map_register_store(
         std::map<int,RegisterStore> & _p_map_in,
         std::map<int,RegisterStore> & _p_map_out)
 {
-#ifdef _DEBUG
     int i = 0;
     while (_p_map_in.find(i) != _p_map_in.end())
     {
@@ -131,7 +130,6 @@ void printf_map_register_store(
         i++;
         printf("\n");
     }
-#endif
 }
 
 void printf_map_register_store(std::map<int,RegisterStore> & _p_map,
@@ -244,7 +242,9 @@ long BuildVMByteCode::build_vmcode(bool b_allocator)
 
         var_pcode.register_store_in  = var_map_label_vmreg_store_in[iter->get_label()];
         var_pcode.register_store_out = var_map_label_vmreg_store_out[iter->get_label()];
+        printf("save_vm_context->\n");
         var_combos_vm_code.save_vm_context();
+        printf(" <-save_vm_context()\n");
 
         for (std::list<ud_t>::iterator uiter = iter->get_piece().begin();
              uiter != iter->get_piece().end();
@@ -267,9 +267,11 @@ long BuildVMByteCode::build_vmcode(bool b_allocator)
                         }
                     }
                 }
+
             std::list<ud_t>::iterator uiter_check_end = uiter;
             if (++uiter_check_end == iter->get_piece().end()) //是否是最后一条指令
             {
+                printf("最后一条指令\n");
                 long next_addr = 0;
                 long jmp_addr = 0;
                 bool test_find_addr_next = var_map_label_vmreg_store_in.find(iter->get_label() + 1) !=
@@ -483,7 +485,6 @@ BuildVMByteCode::BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
     long vm_byte_code_head = build_vmcode(true);
     build_vmcode(false);
     ptr_address_table->copy();
-    long init_vm_key = 0x12345678;
 
     bool t_sign = ptr_address_table->get_sign();
     ptr_address_table->set_sign(true);
@@ -495,7 +496,7 @@ BuildVMByteCode::BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
           &(var_vmcode_manager_list[0]->get_pcode()),
           1,//ptr_info->addr + ptr_info->size,
           123456,
-          init_vm_key); //pcode位置有问题
+          0x12345678); // init_vm_key = 0x12345678;
 
     ptr_address_table->copy(head_address,info->buf,info->size);
     ptr_info->addr = head_address;

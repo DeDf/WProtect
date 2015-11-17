@@ -63,6 +63,7 @@ long VCombosVMCode::get_code_size()
 void VCombosVMCode::save_vm_context()
 {
    int register_count = ptr_pcode->register_store_in.register_count;
+   printf("register_count : %d\n", register_count);
    for (int i = register_count; i > 0; --i)
    {
     pop(ptr_pcode->register_store_in.register_array[i-1]);

@@ -14,6 +14,10 @@
 
 FileLogger logger(stdout);
 
+#ifndef _DEBUG
+#define _DEBUG
+#endif
+
 VMHandle::VMHandle()
 {
     l_initialization = a.newLabel();
@@ -109,10 +113,7 @@ VMHandle::VMHandle()
     l_rdtsc = a.newLabel();
     l_cpuid = a.newLabel();
     l_fstsw = a.newLabel();
-
-#ifdef _DEBUG
-    l_int3 = a.newLabel();
-#endif
+    l_int3  = a.newLabel();
 
     srand((unsigned int)time(NULL));
     key = rand(); //Ëæ»úkey
@@ -1163,7 +1164,7 @@ void VMHandle::full_handle_info(handle_info & info,char flag)
     info.type   = 0;
     info.size   = 0;
     info.buf    = NULL;
-    info.offset = 0;
+    info.offset = a.getOffset();
     
     encryption en;
     decryption de;
@@ -1232,19 +1233,16 @@ handle_info VMHandle::dispatch(long table_addr)
     vcode_encryption en;
     vcode_decryption de;
     en.key = 0;
-    int r = rand()%alg_vcode_count;
-    for (int i = 0; i < r; ++i)
+
+    algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_vcode_count];
+    fuc(en,de,al,bl);
+    for (int i = 0; i < de.defuc->getCodeSize(); ++i)
     {
-        algorithms_vcode fuc = alg_vcode_fuc_array[rand()%alg_vcode_count];
-        fuc(en,de,al,bl);
-        for (int i = 0; i < de.defuc->getCodeSize(); ++i)
-        {
-            unsigned char * code = de.defuc->getCode();
-            a.db(code[i]);
-        }      
-        info.encode_pcode.push_back(en);
-        delete de.defuc;
-    }
+        unsigned char * code = de.defuc->getCode();
+        a.db(code[i]);
+    }      
+    info.encode_pcode.push_back(en);
+    delete de.defuc;
 
 #ifdef PROTECT_X64
     a.push(qword_ptr_abs((void*)table_addr,nax,3));

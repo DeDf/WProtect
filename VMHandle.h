@@ -47,9 +47,7 @@ typedef struct _handle_info
 {
     Label *label; //±Í«©÷∏’Î
 
-#ifdef _DEBUG
     char handle_name[20];
-#endif
 
     unsigned char *buf;
     unsigned long size;
@@ -169,10 +167,8 @@ public:
     handle_info in();
     handle_info rdtsc();
     handle_info fstsw();
-    
-#ifdef _DEBUG
     handle_info int3();
-#endif
+
     ///////label/////
     Label l_set_pc;
     Label l_push_stack_top_base;
@@ -264,10 +260,7 @@ public:
     Label l_rdtsc;
     Label l_cpuid;
     Label l_fstsw;
-
-#ifdef _DEBUG
     Label l_int3;
-#endif
 
 private:
     void read_pc_byte (handle_info &info);

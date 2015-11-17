@@ -167,7 +167,7 @@ void buildvm_test(BuildExeInfo & build_info)
     VirtualMachineManage vm;
     VirtualMachine *pvm = vm.add_virtual_machine(virtualmachine_address,false);
 
-    table.copy(virtualmachine_address,pvm->vm_info.buf,pvm->vm_info.size);     
+    table.copy(virtualmachine_address,pvm->vm_info.buf,pvm->vm_info.size);
 
     CodeBufferInfo Code;
     for (BuildExeInfo::iterator iter = build_info.begin();
