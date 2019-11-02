@@ -9,6 +9,7 @@
 
 #include "SeniorVMHandle.hpp"
 #include "CombosVMCode.hpp"
+#include "AddressTable.hpp"
 #include "algorithms.hpp"
 
 typedef struct _v_table_

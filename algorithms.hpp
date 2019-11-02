@@ -8,21 +8,19 @@
 #define _ALGORITHMS_H_
 
 template <class T>
-void upset(T * t,int count)  //把数据乱序后返回
+void RandList(T *list, unsigned long count)  //把数据乱序后返回
 {
-    int nowCount = count;
-    T temp;
+    T t;
 
-    while (nowCount)
+    while (count)
     {
-        int rd = rand() % nowCount;
-        temp = t[rd];
-        nowCount--;
-        t[rd] = t[nowCount];
-        t[nowCount] = temp;
+        unsigned long rd = rand() % count;
+        count--;
+
+        t = list[rd];
+        list[rd] = list[count];
+        list[count] = t;
     }
 }
-
-#include "AddressTable.hpp"
 
 #endif /* _ALGORITHMS_H_ */

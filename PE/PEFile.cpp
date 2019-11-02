@@ -27,12 +27,14 @@ bool CPEFile::LoadPEFile(char *file_name)
         m_pFile->ImageBase = NULL;
         m_pFile->Size = 0;
     }
+
 	FILE *pFile;
     fopen_s( &pFile, file_name, "rb" );
 	if (!pFile)
     {
         return false;
     }
+
 	fseek(pFile,0,SEEK_END);
 	int len = ftell(pFile);
 	m_pFile->ImageBase = new unsigned char[len];

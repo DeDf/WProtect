@@ -115,7 +115,7 @@ VMHandle::VMHandle()
     l_fstsw = a.newLabel();
     l_int3  = a.newLabel();
 
-    srand((unsigned int)time(NULL));
+    //srand((unsigned int)time(NULL));
     key = rand(); //Ëæ»úkey
 }
 

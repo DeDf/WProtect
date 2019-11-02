@@ -9,16 +9,17 @@ struct Code_Piece
   long CodeSize;
 }; 
 
-class BuildExeInfo {
-    char * build_exe_name;
+class BuildExeInfo
+{
+    char *pchBuildExeName;
     std::list<Code_Piece> list_CodePiece;
+
   public:
-    BuildExeInfo(char * _filename)
+    BuildExeInfo(char *pchFileName)
     {
-        build_exe_name = _filename;
+        pchBuildExeName = pchFileName;
     }
-    ~BuildExeInfo()
-    {}
+    ~BuildExeInfo(){}
 
     typedef std::list<Code_Piece>::iterator iterator;
 
@@ -45,9 +46,9 @@ class BuildExeInfo {
         }
     }
 
-    char * get_filename()
+    char *get_filename()
     {
-      return build_exe_name;
+      return pchBuildExeName;
     }
 };
 

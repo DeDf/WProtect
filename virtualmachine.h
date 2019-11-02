@@ -22,13 +22,13 @@ typedef struct PCODE_BLOCK_INFO
   unsigned char *buf;
   unsigned long size;
   AsmJit::Assembler a;
-}pcode_block_info,*ppcode_block_info;
+}pcode_block_info, *ppcode_block_info;
 
 typedef struct VIRTUAL_MACHINE_CODE_INFO
 {
   unsigned char *buf;
   unsigned long size;
-  unsigned long base; //虚拟机基质
+  unsigned long base; //虚拟机基址
 }VirtualMachineCode,*pVirtualMachineCode;
 
 class VirtualMachine
@@ -36,7 +36,7 @@ class VirtualMachine
  public:
   VirtualMachine(  );
   VirtualMachine(long base);
-  VirtualMachine(long base,bool sign);
+  VirtualMachine(long base, bool sign);
   ~VirtualMachine(  );
   
   vm_handle handle_pcode;
@@ -50,8 +50,9 @@ class VirtualMachine
   {
    return handle;
   }
+
   void build_vm_handle(long base );
-  void full_handle_table(long base,long table_offset);
+  void full_handle_table(long base, long table_offset);
   list <handle_info> handle_info_list;
   ppcode_block_info add_new_function( long base,PCode *code ,long ret_address,long v_key,long decryption_key);
   ppcode_block_info create_function_head(long reloc_base,long base,PCode *code ,long ret_address,long v_key,long decryption_key);  

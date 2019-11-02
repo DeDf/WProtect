@@ -136,6 +136,8 @@ void get_wprotect_sdk_address(CPESection & section,
 
 void buildvm_test(BuildExeInfo & build_info)
 {
+    srand( (unsigned int)time( NULL ) );
+
     char * build_exec_name = build_info.get_filename();
     printf("待处理文件：%s\n", build_exec_name);
 
@@ -165,9 +167,9 @@ void buildvm_test(BuildExeInfo & build_info)
     table.set_sign(t_sign);
 
     VirtualMachineManage vm;
-    VirtualMachine *pvm = vm.add_virtual_machine(virtualmachine_address,false);
+    VirtualMachine *pvm = vm.add_virtual_machine(virtualmachine_address, false);
 
-    table.copy(virtualmachine_address,pvm->vm_info.buf,pvm->vm_info.size);
+    table.copy(virtualmachine_address, pvm->vm_info.buf, pvm->vm_info.size);
 
     CodeBufferInfo Code;
     for (BuildExeInfo::iterator iter = build_info.begin();
@@ -188,14 +190,15 @@ void buildvm_test(BuildExeInfo & build_info)
         Analysis analysis;
         std::vector<long> addr_table;
         std::vector<long*> addr_entry_point;
+        //
         analysis.analysis_address_table(&Code,
             addr_table,
             section.GetSectionMinAddress(),
             section.GetSectionMaxAddress());
 
-        get_table_addr(section,addr_table,addr_entry_point);
+        get_table_addr(section, addr_table, addr_entry_point);
 
-        BuildVMByteCode build(&vm,&Code,&table,addr_entry_point);
+        BuildVMByteCode build(&vm, &Code, &table, addr_entry_point);
         memset(Code.buf, 0, Code.size);                // 旧代码置零
         add_jmp_addr(file, CodeStartAddr, Code.addr);  // 旧代码处修改为jmp Code.addr
     }
@@ -215,8 +218,7 @@ void buildvm_test(BuildExeInfo & build_info)
         (unsigned long )table.buffer_size);
 
     char new_file_name[256];
-    memset(new_file_name,0,256);
-    memcpy(new_file_name,build_exec_name,strlen(build_exec_name)-3); 
+    memcpy(new_file_name, build_exec_name, strlen(build_exec_name)-3); 
     strcat_s(new_file_name,256,"wp.exe");
     printf("Out File:%s\n", new_file_name);
     file.SavePEFile(new_file_name);
@@ -224,7 +226,6 @@ void buildvm_test(BuildExeInfo & build_info)
 
 int main()
 {
-    srand( (unsigned int)time( NULL ) );
     BuildExeInfo build_pe("movzx_test.exe");
     buildvm_test(build_pe);
     return 0;

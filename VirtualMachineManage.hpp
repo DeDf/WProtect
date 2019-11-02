@@ -19,9 +19,9 @@ public:
     //
     VirtualMachineManage();
     virtual ~VirtualMachineManage();
-    VirtualMachine *  add_virtual_machine(long base,bool sign = false);
+    VirtualMachine *  add_virtual_machine(long base, bool sign = false);
     VirtualMachine * rand_virtual_machine();
-    void moc(VirtualMachine *pvm,PCode *code);
+    void moc(VirtualMachine *pvm, PCode *code);
 };
 
 #endif /* _VIRTUALMACHINEMANAGE_H_ */

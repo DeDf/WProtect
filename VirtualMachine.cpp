@@ -8,13 +8,14 @@
 #include "PCode.hpp"
 #define _STDINT_H
 #include "Libudis86/udis86.h"
+#include "algorithms.hpp"
 
 VirtualMachine::VirtualMachine(long base)
 {
   build_vm_handle(base);
 }
 
-VirtualMachine::VirtualMachine(long base,bool sign)
+VirtualMachine::VirtualMachine(long base, bool sign)
 {
   handle.sign = sign;
   build_vm_handle(base);
@@ -69,32 +70,13 @@ VirtualMachine::~VirtualMachine()
     }
   }
 }
-
-
-template <class T>
-T * upset(T * t,int nSize)  //把数据乱序后返回
-{
-	T *temp=new T[nSize];
-	int nowsize=nSize;
-	while (nowsize)
-	{
-		int rd=rand()%nowsize;
-		temp[nSize-nowsize]=t[rd];
-		nowsize--;
-		for (int i = 0; i < nowsize - rd; i++)
-		{
-			t[rd+i]=t[rd+1+i];
-		}
-	}
-	memcpy(t,temp,nSize * sizeof(T));
-	return t;
-}
-
+ 
 typedef handle_info (VMHandle::*v_handle)();
 
 void VirtualMachine::build_vm_handle(long base)
 {
-  v_handle handle_array[]={
+  v_handle handle_array[] =
+  {
     &VMHandle::b_read_stack,
     &VMHandle::w_read_stack,
     &VMHandle::d_read_stack,
@@ -190,7 +172,7 @@ void VirtualMachine::build_vm_handle(long base)
 
   unsigned long handle_count = sizeof(handle_array) / sizeof (v_handle);
   printf("共有0x%x个VM_handle\n", handle_count);
-  upset<v_handle>(handle_array,handle_count);
+  RandList<v_handle>(handle_array, handle_count);
 
   handle_info info;
   for (unsigned int i = 0; i < handle_count; i++)
@@ -227,7 +209,7 @@ void VirtualMachine::build_vm_handle(long base)
   handle_pcode.dispatch.encode_key   = &handle_info_list.back().encode;
   handle_pcode.dispatch.encode_pcode = &handle_info_list.back().encode_pcode;
 
-  handle.a.relocCode(handle.a.getCode(),base);
+  handle.a.relocCode(handle.a.getCode(), base);
   vm_info.base = base;
   vm_info.buf  = handle.a.getCode();
   vm_info.size = handle.a.getCodeSize();
@@ -712,7 +694,7 @@ void VirtualMachine::full_handle_table(long base,long table_offset)
 
     if (instruction == NULL)
     {
-      printf("!!ERROR %s:%d:%s\r\n",__FILE__,__LINE__,info.handle_name);
+      printf("!!ERROR %s:%d:%s\r\n", __FILE__, __LINE__, info.handle_name);
     }
 
     instruction->handle_i = (unsigned char)count++;

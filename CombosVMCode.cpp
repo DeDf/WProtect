@@ -126,7 +126,7 @@ void VCombosVMCode::upset_register_array(RegisterStore & r )
 #endif
   r.register_count = register_count;
 
-  upset<long>( r.register_array, register_count);
+  RandList<long>( r.register_array, register_count);
 } 
 
 void VCombosVMCode::run_stack()

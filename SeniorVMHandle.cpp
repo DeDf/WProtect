@@ -81,7 +81,7 @@ void SeniorVMHandle::upset_register_array(RegisterStore & r )
   r.register_array[ register_count++ ] = T_R15;
 #endif
   r.register_count = register_count;
-  upset<long>( r.register_array, register_count);
+  RandList<long>( r.register_array, register_count);
 }
 
 void SeniorVMHandle::recover_vm_context()
