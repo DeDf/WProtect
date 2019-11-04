@@ -16,14 +16,14 @@
 void PCode::out_log_file(char * file_name)
 {
  #ifdef _DEBUG
-    v_log = fopen(file_name,"wb");
-#endif     
+    v_log = NULL;//fopen(file_name, "wb");
+#endif
 }
 
 #ifdef _DEBUG
 void PCode::out_info(char * _sz)
 {
-    fprintf(v_log,"%s", _sz);
+    fprintf(v_log, "%s", _sz);
 }
 #endif
 
@@ -403,15 +403,15 @@ void PCode::db(unsigned char b)
                 {
                     iter->en_fn(&key);  // 对Key进行变换
 
-//                     ud_t ud_obj;
-//                     ud_init(&ud_obj);
-//                     ud_set_mode(&ud_obj, 32);
-//                     ud_set_input_buffer(&ud_obj, (uint8_t*)iter->en_fn, 26);
-//                     ud_set_syntax(&ud_obj, UD_SYN_INTEL);
-//                     printf("\n");
-//                     while (ud_disassemble(&ud_obj)) {
-//                         printf("%s\n",ud_insn_asm(&ud_obj));
-                    //}
+                    ud_t ud_obj;
+                    ud_init(&ud_obj);
+                    ud_set_mode(&ud_obj, 32);
+                    ud_set_input_buffer(&ud_obj, (uint8_t*)iter->en_fn, 26);
+                    ud_set_syntax(&ud_obj, UD_SYN_INTEL);
+                    printf("\n");
+                    while (ud_disassemble(&ud_obj)) {
+                        printf("%s\n",ud_insn_asm(&ud_obj));
+                    }
                 }
 
                 for (list<vcode_encryption>::reverse_iterator iter =
@@ -736,7 +736,10 @@ void PCode::set_register_name(long _register)
     }
 
     if (_register & T_E32X)
-    {   
+    {
+        if (reg_name[0] == 'r')
+            reg_name[0] = 'e';
+
         if (_register & T_16X)   
         {
             if (_register & T_8H)

@@ -55,7 +55,7 @@ class VirtualMachine
   void full_handle_table(long base, long table_offset);
   list <handle_info> handle_info_list;
   ppcode_block_info add_new_function( long base,PCode *code ,long ret_address,long v_key,long decryption_key);
-  ppcode_block_info create_function_head(long reloc_base,long base,PCode *code ,long ret_address,long v_key,long decryption_key);  
+  ppcode_block_info create_function_head(long reloc_base, long base, PCode *code, long v_key, long decryption_key);  
   long dispatch_base;
   list <ppcode_block_info> pcode_list;
   void init(AsmJit::Assembler &a);

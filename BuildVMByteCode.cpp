@@ -23,6 +23,8 @@
 #include "VOperand.hpp"
 #pragma warning(disable:4309)
 
+long g_Handle_i_key = 0x12345678;
+
 #define get_operand1(x)      x.operand[0]
 #define get_operand2(x)      x.operand[1]
 #define get_operand1_type(x) x.operand[0].type
@@ -158,7 +160,7 @@ long BuildVMByteCode::get_vmcode_address(int _label_index)
     return result;
 }
 
-
+// DeDf : 1
 long BuildVMByteCode::create_vm_entry(int _piece_label)
 {
     long opcode_addr = get_vmcode_address(_piece_label);
@@ -174,7 +176,6 @@ long BuildVMByteCode::create_vm_entry(int _piece_label)
                             head_address,
                             opcode_addr,
                             &(buffer_manage->get_pcode()),
-                            123,
                             123456,
                             init_de_key); //pcode位置有问题
 
@@ -232,7 +233,9 @@ long BuildVMByteCode::build_vmcode(bool b_allocator)
 #ifdef _DEBUG
             char file_name[256];
             memset(&file_name,0,256);
-            sprintf_s(file_name, 256, "virtual_machine_Label%d,%08x\n",
+
+            sprintf_s(file_name, 256, "virtual_machine_Label%d_%08x",
+            //sprintf_s(file_name, 256, "virtual_machine_Label\n"
                 iter->get_label(),
                 var_map_label_vmcode_addr[iter->get_label()]);
 
@@ -378,11 +381,12 @@ long BuildVMByteCode::build_vmcode(bool b_allocator)
                     break;
                 }
             }
-            else { //不是最后一条指令
+            else  // 不是最后一条指令
+            {
                 if (ud_insn_mnemonic(&*uiter) != UD_Inop)
                     printf("build %s\n",uiter->insn_buffer);
 
-                build(var_combos_vm_code,*uiter);
+                build(var_combos_vm_code, *uiter);
             }
 
 #ifdef _DEBUG
@@ -462,11 +466,10 @@ void BuildVMByteCode::register_mapped_init()
 BuildVMByteCode::BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
         pCodeBufferInfo ptr_info,
         VMAddressTable *ptr_address_table,
-        std::vector<long*> & entry_address)
-    :newlabel_count(0)
+        std::vector<long*> & entry_address):newlabel_count(0)
 {
    var_entry_address = entry_address;
-   if (!ptr_info->size)
+   if (!ptr_info->size)  // 指令块长度
         return;
 
     register_mapped_init();
@@ -491,57 +494,15 @@ BuildVMByteCode::BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
     long head_address = ptr_address_table->assign_address(0x70);
     ptr_address_table->set_sign(t_sign);
 
-    ppcode_block_info info = pVM->create_function_head(head_address,
+    ppcode_block_info info = pVM->create_function_head(
+          head_address,
           vm_byte_code_head,
           &(var_vmcode_manager_list[0]->get_pcode()),
-          1,//ptr_info->addr + ptr_info->size,
           123456,
-          0x12345678); // init_vm_key = 0x12345678;
+          g_Handle_i_key);
 
-    ptr_address_table->copy(head_address,info->buf,info->size);
+    ptr_address_table->copy(head_address, info->buf, info->size);
     ptr_info->addr = head_address;
-}
-
-BuildVMByteCode::BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
-        pCodeBufferInfo ptr_info,
-        VMAddressTable *ptr_address_table)
-    :newlabel_count(0)
-{
-    if (!ptr_info->size)
-        return;
-
-    register_mapped_init();
-
-    Analysis var_analysis;
-    var_analysis.disasm(ptr_info,var_list_code_piece);
-    var_analysis.printf_piece(var_list_code_piece);
-
-    pVM = ptr_vmmanage->rand_virtual_machine();
-    ptr_addr_table = ptr_address_table;
-
-    full_register_store(var_list_code_piece,
-                              var_map_label_vmreg_store_in,var_map_label_vmreg_store_out);
-    printf_map_register_store(var_map_label_vmreg_store_in,var_map_label_vmreg_store_out);
-    
-    long vm_byte_code_head = build_vmcode(true);
-    build_vmcode(false);
-    ptr_address_table->copy();
-    long init_vm_key = 0x12345678;
-
-    bool t_sign = ptr_address_table->get_sign();
-    ptr_address_table->set_sign(true);
-    long head_address = ptr_address_table->assign_address(0x70);
-    ptr_address_table->set_sign(t_sign);
-
-    ppcode_block_info info = pVM->create_function_head(head_address,
-          vm_byte_code_head,
-          &(var_vmcode_manager_list[0]->get_pcode()),
-          1,//ptr_info->addr + ptr_info->size,
-          123456,
-          init_vm_key); //pcode位置有问题
-
-    ptr_address_table->copy(head_address,info->buf,info->size);
-    ptr_info->addr = head_address; 
 }
 
 BuildVMByteCode::~BuildVMByteCode()
@@ -1104,7 +1065,7 @@ void BuildVMByteCode::read_vm_operand(VCombosVMCode & var_combos_vm_code,ud_oper
      read_mem(var_operand);
 }
 
-void BuildVMByteCode::build(VCombosVMCode & var_combos_vm_code,ud_t &ud)
+void BuildVMByteCode::build(VCombosVMCode & var_combos_vm_code, ud_t &ud)
 {
    if( get_operand1(ud).base  == UD_R_ESP ||
        get_operand1(ud).index == UD_R_ESP ||

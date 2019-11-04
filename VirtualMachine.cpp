@@ -172,6 +172,7 @@ void VirtualMachine::build_vm_handle(long base)
 
   unsigned long handle_count = sizeof(handle_array) / sizeof (v_handle);
   printf("¹²ÓÐ0x%x¸öVM_handle\n", handle_count);
+
   RandList<v_handle>(handle_array, handle_count);
 
   handle_info info;
@@ -306,13 +307,21 @@ void VirtualMachine::add_pcode(AsmJit::Assembler &a,PCode *code,long base,long r
       a.jmp(dispatch_base);
 }
 
+
+// DeDf : 1
 ppcode_block_info VirtualMachine::create_function_head(long reloc_base,
                                                        long pcode_base,
                                                        PCode *pcode,
-                                                       long ret_address,
                                                        long v_key,
-                                                       long decryption_key)
+                                                       long Handle_i_key)
 {
+    printf("create_function_head():\n"
+           "  reloc_base  : %x\n"
+           "  pcode_base  : %x\n",
+           reloc_base, pcode_base);
+
+    __debugbreak();
+
   using namespace AsmJit;
   ppcode_block_info info = new pcode_block_info;
   info->entry = pcode_base;
@@ -385,8 +394,9 @@ ppcode_block_info VirtualMachine::create_function_head(long reloc_base,
 #endif
     }
   }
-      info->a.mov(nbx,decryption_key);
+      info->a.mov(nbx,Handle_i_key);
       info->a.mov(nbp,nsp);
+
 #ifndef PROTECT_X64
       info->a.sub(nsp,REG_NUMBER * 4 + VMSTACK_MIN_COUNT * 4);
 #else

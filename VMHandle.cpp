@@ -145,7 +145,8 @@ void c_add(encryption &_en,decryption &_de,const GPReg &_op_r)
       _en.enfuc->add(byte_ptr(_en.enfuc->argGP(0)),r);
       _en.enfuc->movzx(result,byte_ptr(_en.enfuc->argGP(0)));
       _en.enfuc->ret(result);
-    } else if (bW)
+    }
+   else if (bW)
     {
       short r = rand()%0x10000;  
       _de.defuc->add(_op_r,r);
@@ -154,7 +155,8 @@ void c_add(encryption &_en,decryption &_de,const GPReg &_op_r)
       _en.enfuc->add(word_ptr(_en.enfuc->argGP(0)),r);
       _en.enfuc->movzx(result,word_ptr(_en.enfuc->argGP(0)));
       _en.enfuc->ret(result);
-    } else if (bD)
+    }
+   else if (bD)
     {
       int r = rand()%0xFFFFFFFF;  
       _de.defuc->add(_op_r,imm(r));
@@ -168,7 +170,8 @@ void c_add(encryption &_en,decryption &_de,const GPReg &_op_r)
       _en.enfuc->mov(result,dword_ptr(_en.enfuc->argGP(0)));
 #endif
       _en.enfuc->ret(result);
-    } else if(bQ)
+    }
+   else if(bQ)
     {
       long r = rand();  
       _de.defuc->add(_op_r,r);

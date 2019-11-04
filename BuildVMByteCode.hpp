@@ -34,10 +34,6 @@ public:
     std::vector<CodePiece> var_list_code_piece;  
     std::vector<VMCodeBufferManage *> var_vmcode_manager_list; 
 
-    BuildVMByteCode(VirtualMachineManage *ptr_vmmanage,
-        pCodeBufferInfo ptr_info,
-        VMAddressTable * ptr_address_table);
-
     BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
         pCodeBufferInfo ptr_info,
         VMAddressTable *ptr_address_table,

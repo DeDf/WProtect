@@ -43,9 +43,8 @@ void get_table_addr(CPESection &section,
             if (addr)
                 while (section.CheckAddressValidity(*addr))
                 {
-#ifdef _DEBUG
                     printf ("table addr:%08x\n",*addr);
-#endif
+
                     addr_table_entry_point.push_back(addr);
                     addr++;
                 }
@@ -211,7 +210,7 @@ void buildvm_test(BuildExeInfo & build_info)
 #endif
 
     unsigned long section_size = (unsigned long)(table.buffer_size);
-    section.AddSection(".WPro",section_size,0xE0000020);
+    section.AddSection(".WPro", section_size, 0xE0000020);
     section.WriteSectionData(file.GetSectionCount()-1,
         0,
         (unsigned char*)table.buffer,

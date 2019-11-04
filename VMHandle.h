@@ -70,7 +70,7 @@ public:
     long key;
     bool sign;
 
-    void full_handle_info( handle_info & info,char flag );
+    void full_handle_info( handle_info & info, char flag );
 
     handle_info set_pc();
     handle_info push_stack_top_base();
