@@ -203,7 +203,7 @@ void buildvm_test(BuildExeInfo & build_info)
 #ifdef _DEBUG
     FILE *pfile;
     fopen_s( &pfile, "virtualmachine", "wb" );
-    fwrite( pvm->vm_info.buf, 1, pvm->vm_info.size, pfile );
+    fwrite( vm->vm_info.buf, 1, vm->vm_info.size, pfile );
     fclose( pfile );
 #endif
 
