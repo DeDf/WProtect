@@ -463,7 +463,7 @@ void BuildVMByteCode::register_mapped_init()
     mapped_vm_register.insert(make_pair<ud_type,long>(UD_R_DH,T_DH));
 }
 
-BuildVMByteCode::BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
+BuildVMByteCode::BuildVMByteCode(VirtualMachine *vm,
         pCodeBufferInfo ptr_info,
         VMAddressTable *ptr_address_table,
         std::vector<long*> & entry_address):newlabel_count(0)
@@ -478,7 +478,7 @@ BuildVMByteCode::BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
     var_analysis.disasm(ptr_info,var_list_code_piece);
     var_analysis.printf_piece(var_list_code_piece);
 
-    pVM = ptr_vmmanage->rand_virtual_machine();
+    pVM = vm;
     ptr_addr_table = ptr_address_table;
 
     full_register_store(var_list_code_piece,

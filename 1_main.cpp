@@ -11,7 +11,6 @@
 //
 #include "algorithms.hpp"
 #include "Analysis.hpp"
-#include "VirtualMachineManage.hpp"
 #include "VirtualMachine.h"
 #include "VMHandle.h"
 #include "CombosVMCode.hpp"
@@ -165,10 +164,9 @@ void buildvm_test(BuildExeInfo & build_info)
     long virtualmachine_address = table.assign_address(4096);
     table.set_sign(t_sign);
 
-    VirtualMachineManage vm;
-    VirtualMachine *pvm = vm.add_virtual_machine(virtualmachine_address, false);
+    VirtualMachine *vm = new VirtualMachine(virtualmachine_address, false);
 
-    table.copy(virtualmachine_address, pvm->vm_info.buf, pvm->vm_info.size);
+    table.copy(virtualmachine_address, vm->vm_info.buf, vm->vm_info.size);
 
     CodeBufferInfo Code;
     for (BuildExeInfo::iterator iter = build_info.begin();
@@ -197,7 +195,7 @@ void buildvm_test(BuildExeInfo & build_info)
 
         get_table_addr(section, addr_table, addr_entry_point);
 
-        BuildVMByteCode build(&vm, &Code, &table, addr_entry_point);
+        BuildVMByteCode build(vm, &Code, &table, addr_entry_point);
         memset(Code.buf, 0, Code.size);                // 旧代码置零
         add_jmp_addr(file, CodeStartAddr, Code.addr);  // 旧代码处修改为jmp Code.addr
     }

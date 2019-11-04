@@ -166,19 +166,23 @@ typedef struct _REGISTER_STORE_
 {
   long register_array[REG_NUMBER];
   long register_count;
+
   _REGISTER_STORE_(  )
   {
     memset( register_array, T_INVALID, sizeof(long)*REG_NUMBER );
     register_count = 0;
   }
+
   ~_REGISTER_STORE_(  )
   {
   }
+
   void operator = ( const _REGISTER_STORE_ & rhs )
   {
     register_count = rhs.register_count;
-    memcpy( &register_array,&rhs.register_array,sizeof( long )*REG_NUMBER  );
+    memcpy( &register_array,&rhs.register_array,sizeof( long )*REG_NUMBER );
   }
+
   long get_key()
   {
       //CryptoPP::CRC32 crc;

@@ -3,7 +3,6 @@
 #define BUILDVMBYTECODE_HPP
 
 #include "CombosVMCode.hpp"
-#include "VirtualMachineManage.hpp"
 #include "VMAddressTable.hpp"
 #include "VMCodeBuffer.hpp"
 #include "Analysis.hpp"
@@ -34,7 +33,7 @@ public:
     std::vector<CodePiece> var_list_code_piece;  
     std::vector<VMCodeBufferManage *> var_vmcode_manager_list; 
 
-    BuildVMByteCode(VirtualMachineManage * ptr_vmmanage,
+    BuildVMByteCode(VirtualMachine *vm,
         pCodeBufferInfo ptr_info,
         VMAddressTable *ptr_address_table,
         std::vector<long *> & entry_address);

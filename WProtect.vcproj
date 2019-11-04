@@ -363,10 +363,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\VirtualMachineManage.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\VMHandle.cpp"
 				>
 			</File>
