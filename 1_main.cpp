@@ -27,30 +27,6 @@ void add_jmp_addr(CPEFile pe,long base,long jmp_address)
     *(long*)(c + 1) = jmp_address - base - 5;
 }
 
-void get_table_addr(CPESection &section,
-                    std::vector<long>   & addr_table_entry,
-                    std::vector<long *> & addr_table_entry_point)
-{
-    for (std::vector<long>::iterator iter = addr_table_entry.begin();
-        iter != addr_table_entry.end();
-        iter++)
-    {
-        if (section.CheckAddressValidity(*iter))
-        {
-            long *addr = (long*)section.VaToPtr(*iter);
-
-            if (addr)
-                while (section.CheckAddressValidity(*addr))
-                {
-                    printf ("table addr:%08x\n",*addr);
-
-                    addr_table_entry_point.push_back(addr);
-                    addr++;
-                }
-        }
-    }
-}
-
 void get_wprotect_sdk_address(CPESection & section,
                               BuildExeInfo & build_info,
                               char *sz_sdk_begin_name,
@@ -68,7 +44,6 @@ void get_wprotect_sdk_address(CPESection & section,
     {
         DWORD section_size;
         BYTE * p = section.GetSectionData(i, &section_size);
-        printf("第%d个区段，大小%d\n",i,section_size);
 
         for (DWORD offset = 0; offset+1 < section_size; offset++)
         {
@@ -149,24 +124,26 @@ void buildvm_test(BuildExeInfo & build_info)
     CPEReloc reloc;
     reloc = file;
     reloc.DeleteReloc();
-    reloc.GetBaseReloc();
 
     CPESection section;
     section = file;
-    printf ("一共有%d个区段\n", section.GetSectionCount());
-
     get_wprotect_sdk_address(section,build_info,"WProtect Begin","WProtect End");
+    printf("\n");
 
-    VMAddressTable table( section.GetNewSectionBase(), 1024, false );
+    ULONG NewSectionBase = section.GetNewSectionBase();
+    printf("NewSectionBase : %x\n", NewSectionBase);
 
+    VMAddressTable table( NewSectionBase, 1024, false );
     bool t_sign = table.get_sign();
     table.set_sign(true);
-    long virtualmachine_address = table.assign_address(4096);
+    long vm_address = table.assign_address(4096);
     table.set_sign(t_sign);
 
-    VirtualMachine *vm = new VirtualMachine(virtualmachine_address, false);
+    VirtualMachine *pvm = new VirtualMachine(vm_address, false);
+    //
+    printf("vm_address : %x\n", vm_address);
 
-    table.copy(virtualmachine_address, vm->vm_info.buf, vm->vm_info.size);
+    table.copy(vm_address, pvm->vm_info.buf, pvm->vm_info.size);
 
     CodeBufferInfo Code;
     for (BuildExeInfo::iterator iter = build_info.begin();
@@ -186,26 +163,16 @@ void buildvm_test(BuildExeInfo & build_info)
 
         Analysis analysis;
         std::vector<long> addr_table;
-        std::vector<long*> addr_entry_point;
         //
         analysis.analysis_address_table(&Code,
             addr_table,
             section.GetSectionMinAddress(),
             section.GetSectionMaxAddress());
 
-        get_table_addr(section, addr_table, addr_entry_point);
-
-        BuildVMByteCode build(vm, &Code, &table, addr_entry_point);
+        BuildVMByteCode build(pvm, &Code, &table);
         memset(Code.buf, 0, Code.size);                // 旧代码置零
         add_jmp_addr(file, CodeStartAddr, Code.addr);  // 旧代码处修改为jmp Code.addr
     }
-
-#ifdef _DEBUG
-    FILE *pfile;
-    fopen_s( &pfile, "virtualmachine", "wb" );
-    fwrite( pvm->vm_info.buf, 1, pvm->vm_info.size, pfile );
-    fclose( pfile );
-#endif
 
     unsigned long section_size = (unsigned long)(table.buffer_size);
     section.AddSection(".WPro", section_size, 0xE0000020);
@@ -225,5 +192,6 @@ int main()
 {
     BuildExeInfo build_pe("movzx_test.exe");
     buildvm_test(build_pe);
+    getchar();
     return 0;
 }

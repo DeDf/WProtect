@@ -36,7 +36,7 @@ public:
     char *buffer;
     unsigned long buffer_size;
 
-  VMAddressTable(long _base,unsigned long _size,bool _sign)
+  VMAddressTable(long _base, unsigned long _size, bool _sign)
     :AddressTable( _base,_size,_sign ),buffer(NULL),buffer_size(0)
 #ifdef _DEBUG
      ,vmcode_piece_count(0)
@@ -81,12 +81,14 @@ public:
     return address;
   }
 
-  void * copy(long address,unsigned char * buf,unsigned long size)
+  void *copy(long address, unsigned char *buf, unsigned long size)
   {
     if (buffer == NULL)
-      init_buffer();    
+      init_buffer();
+
     void * buff = &(buffer[address-base]);
     memcpy(buff,buf,size);
+
     return buff;
   }
   
@@ -254,7 +256,7 @@ public:
       if (buffer_size < size)
       {
         char * newbuf = new char[size];
-        memcpy(newbuf,buffer,buffer_size);
+        memcpy(newbuf, buffer, buffer_size);
         delete [] buffer;
         buffer = newbuf;
         buffer_size = size;

@@ -320,8 +320,6 @@ ppcode_block_info VirtualMachine::create_function_head(long reloc_base,
            "  pcode_base  : %x\n",
            reloc_base, pcode_base);
 
-    __debugbreak();
-
   using namespace AsmJit;
   ppcode_block_info info = new pcode_block_info;
   info->entry = pcode_base;

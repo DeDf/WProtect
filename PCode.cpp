@@ -403,15 +403,15 @@ void PCode::db(unsigned char b)
                 {
                     iter->en_fn(&key);  // 对Key进行变换
 
-                    ud_t ud_obj;
-                    ud_init(&ud_obj);
-                    ud_set_mode(&ud_obj, 32);
-                    ud_set_input_buffer(&ud_obj, (uint8_t*)iter->en_fn, 26);
-                    ud_set_syntax(&ud_obj, UD_SYN_INTEL);
-                    printf("\n");
-                    while (ud_disassemble(&ud_obj)) {
-                        printf("%s\n",ud_insn_asm(&ud_obj));
-                    }
+//                     ud_t ud_obj;
+//                     ud_init(&ud_obj);
+//                     ud_set_mode(&ud_obj, 32);
+//                     ud_set_input_buffer(&ud_obj, (uint8_t*)iter->en_fn, 26);
+//                     ud_set_syntax(&ud_obj, UD_SYN_INTEL);
+//                     printf("\n");
+//                     while (ud_disassemble(&ud_obj)) {
+//                         printf("%s\n",ud_insn_asm(&ud_obj));
+//                     }
                 }
 
                 for (list<vcode_encryption>::reverse_iterator iter =

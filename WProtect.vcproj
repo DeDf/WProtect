@@ -445,6 +445,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PE\PEFile.h"
+				>
+			</File>
+			<File
 				RelativePath=".\PE\PEImport.cpp"
 				>
 			</File>

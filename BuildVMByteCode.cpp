@@ -465,10 +465,8 @@ void BuildVMByteCode::register_mapped_init()
 
 BuildVMByteCode::BuildVMByteCode(VirtualMachine *vm,
         pCodeBufferInfo ptr_info,
-        VMAddressTable *ptr_address_table,
-        std::vector<long*> & entry_address):newlabel_count(0)
+        VMAddressTable *ptr_address_table):newlabel_count(0)
 {
-   var_entry_address = entry_address;
    if (!ptr_info->size)  // Ö¸Áî¿é³¤¶È
         return;
 

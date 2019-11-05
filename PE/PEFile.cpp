@@ -278,10 +278,10 @@ bool CPEFile::SavePEFile(char *save_file_name)
 	FILE * pFile;
     fopen_s( &pFile, save_file_name, "wb" );
 	if (pFile)
-		{
-			fwrite(m_pFile->ImageBase,m_pFile->Size,1,pFile);
-			fclose(pFile);
-			return true;
-		}
+    {
+        fwrite(m_pFile->ImageBase,m_pFile->Size,1,pFile);
+        fclose(pFile);
+        return true;
+    }
 	return false;
 }

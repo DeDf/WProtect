@@ -35,8 +35,7 @@ public:
 
     BuildVMByteCode(VirtualMachine *vm,
         pCodeBufferInfo ptr_info,
-        VMAddressTable *ptr_address_table,
-        std::vector<long *> & entry_address);
+        VMAddressTable *ptr_address_table);
 
     ~BuildVMByteCode();
 
