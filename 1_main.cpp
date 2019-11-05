@@ -174,16 +174,6 @@ void buildvm_test(BuildExeInfo & build_info)
         add_jmp_addr(file, CodeStartAddr, Code.addr);  // 旧代码处修改为jmp Code.addr
     }
 
-<<<<<<< HEAD
-=======
-#ifdef _DEBUG
-    FILE *pfile;
-    fopen_s( &pfile, "virtualmachine", "wb" );
-    fwrite( vm->vm_info.buf, 1, vm->vm_info.size, pfile );
-    fclose( pfile );
-#endif
-
->>>>>>> 90d34fde52f92c4126714c7704493f0c90f707e2
     unsigned long section_size = (unsigned long)(table.buffer_size);
     section.AddSection(".WPro", section_size, 0xE0000020);
     section.WriteSectionData(file.GetSectionCount()-1,
